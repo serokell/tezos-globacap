@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2020 TBD
+# SPDX-License-Identifier: LicenseRef-Proprietary
+- package:
+  - name: globacap
+  - section:
+    - name: exe:globacap
+    - message:
+      - name: Redundant build-depends entry
+      - depends: base-noprelude
+  - section:
+    - name: library
+    - message:
+      - name: Redundant build-depends entry
+      - depends: base-noprelude
+  - section:
+    - name: test:globacap-test
+    - message:
+      - name: Weeds exported
+      - module:
+        - name: Tree
+        - identifier:
+          - ingredients
+          - main
+    - message:
+      - name: Redundant build-depends entry
+      - depends: base-noprelude
