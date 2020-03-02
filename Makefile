@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2020 TBD
+# SPDX-License-Identifier: LicenseRef-Proprietary
 .PHONY: build test test-ci haddock haddock-no-deps stylish lint clean all
 
 # Build target from the common utility Makefile
