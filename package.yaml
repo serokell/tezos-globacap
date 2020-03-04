@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: 2020 TBD
+# SPDX-License-Identifier: LicenseRef-Proprietary
+<<: !include "./hpack/module.yaml"
+
+name:                globacap
+version:             0.1.0
+
+extra-source-files:
+- README.md
+
+category:            Blockchain
+description:
+  FA1.2-based token contract (called `Holdings`) with
+  `Safelist` contract that contains information about whitelisted
+  and blacklisted investors.
+
+verbatim:
+  cabal-version: 2.2
+
+library:
+  <<: *lib-common
+
+  default-extensions:
+    - RebindableSyntax
+
+  dependencies:
+    - morley-prelude
+
+executables:
+  globacap:
+    <<: *exec-common
+
+    dependencies:
+      - morley-prelude
+
+tests:
+  globacap-test:
+    <<: *test-common
+
+    dependencies:
+      - HUnit
+      - morley-prelude
+      - tasty
+      - tasty-hunit-compat
