@@ -4,6 +4,7 @@ module Indigo.Contracts.Safelist
   , Storage (..)
   , mkStorage
   , safelistContract
+  , safelistDoc
   ) where
 
 import Indigo
@@ -67,11 +68,19 @@ safelistIndigo
   :: (HasStorage Storage, HasSideEffects)
   => Var Parameter -> IndigoProcedure '[Parameter, Storage, Ops]
 safelistIndigo param = contractName "Safelist" $ do
+  doc $ $mkDGitRevision $ GitRepoSettings $
+    mappend "https://github.com/serokell/tezos-globacap/commit/"
+  doc $ DDescription
+    "This contract implements regulatory service that can be used by other contracts."
   entryCase (Proxy @PlainEntryPointsKind) param
     ( #cAddAdmin /-> \addr -> do
+        doc $ DDescription
+          "Add new admin, if added address is already admin, then nothing happens."
         ensureSenderIsOwner
         addOrRemoveFromStorageSet addr #sAdmins Insert
     , #cRemoveAdmin /-> \addr -> do
+        doc $ DDescription
+          "Remove admin, address is not an admin already, then nothing happens."
         ensureSenderIsOwner
         addOrRemoveFromStorageSet addr #sAdmins Remove
     , #cIsAdmin /-> \v -> do
@@ -79,9 +88,15 @@ safelistIndigo param = contractName "Safelist" $ do
           "Check whether address is admin. Returns `True` if the address is admin."
         presentedInStorageSet v #sAdmins
     , #cAddToWhitelist /-> \addr -> do
+        doc $ DDescription
+          "Add address to whitelist, if added address is already there, then \
+          \nothing happens."
         ensureSenderIsAdmin
         addOrRemoveFromStorageSet addr #sWhitelist Insert
     , #cRemoveFromWhitelist /-> \addr -> do
+        doc $ DDescription
+          "Remove address from whitelist, if added address is already not there, \
+          \then nothing happens."
         ensureSenderIsAdmin
         addOrRemoveFromStorageSet addr #sWhitelist Remove
     , #cIsWhitelisted /-> \v -> do
@@ -90,9 +105,15 @@ safelistIndigo param = contractName "Safelist" $ do
           \whitelisted."
         presentedInStorageSet v #sWhitelist
     , #cAddToBlacklist /-> \addr -> do
+        doc $ DDescription
+          "Add address to blacklist, if added address is already there, then \
+          \nothing happens."
         ensureSenderIsAdmin
         addOrRemoveFromStorageSet addr #sBlacklist Insert
     , #cRemoveFromBlacklist /-> \addr -> do
+        doc $ DDescription
+          "Remove address from blacklist, if added address is already not there, \
+          \then nothing happens."
         ensureSenderIsAdmin
         addOrRemoveFromStorageSet addr #sBlacklist Remove
     , #cIsBlacklisted /-> \v -> do
@@ -165,3 +186,6 @@ addOrRemoveFromStorageSet addr setName insertOrRemove = do
       Insert -> requiredSet #~. addr
       Remove -> requiredSet #-. addr
   setField_ storage setName newSet
+
+safelistDoc :: ContractDoc
+safelistDoc = buildLorentzDoc safelistContract

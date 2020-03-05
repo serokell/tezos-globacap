@@ -1,5 +1,7 @@
 module Test.Indigo.Contracts.Safelist
-  ( test_Safelist
+  ( test_SafelistSets
+  , test_ensureSafelistConstraints
+  , test_documentation
   ) where
 
 import qualified Data.Set as Set
@@ -22,12 +24,11 @@ originateSafelist owner =
 ownerAddress :: Address
 ownerAddress = genesisAddress
 
-test_Safelist :: TestTree
-test_Safelist = testGroup "Tests to check safelist contract"
+test_SafelistSets :: TestTree
+test_SafelistSets = testGroup "Tests to check sets related entrypoints"
   [ genericSetTestTree adminsHandler
   , genericSetTestTree whitelistHandler
   , genericSetTestTree blacklistHandler
-  , test_ensureSafelistConstraints
   ]
 
 expectStorageUpdate
@@ -159,3 +160,6 @@ test_ensureSafelistConstraints = testGroup "Test EnsureSafelistConstraints entry
       validate . Left $
         lExpectCustomError #constraintUnsatisfied (genesisAddress2, [mt|blacklisted|])
   ]
+
+test_documentation :: [TestTree]
+test_documentation = runDocTests testLorentzDoc safelistDoc
