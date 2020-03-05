@@ -42,7 +42,10 @@ tests:
     <<: *test-common
 
     dependencies:
-      - HUnit
+      - containers
+      - globacap
+      - lorentz
+      - morley
       - morley-prelude
       - tasty
       - tasty-hunit-compat
