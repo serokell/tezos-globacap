@@ -12,6 +12,9 @@
     - message:
       - name: Redundant build-depends entry
       - depends: base-noprelude
+    - message:
+      - name: Redundant build-depends entry
+      - depends: morley-prelude
   - section:
     - name: test:globacap-test
     - message:
