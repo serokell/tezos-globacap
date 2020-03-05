@@ -1,3 +1,6 @@
+-- SPDX-FileCopyrightText: 2020 TBD
+--
+-- SPDX-License-Identifier: LicenseRef-Proprietary
 module Test.Indigo.Contracts.Safelist
   ( test_SafelistSets
   , test_ensureSafelistConstraints

@@ -1,3 +1,6 @@
+-- SPDX-FileCopyrightText: 2020 TBD
+--
+-- SPDX-License-Identifier: LicenseRef-Proprietary
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Indigo.Contracts.Safelist
   ( Parameter (..)
