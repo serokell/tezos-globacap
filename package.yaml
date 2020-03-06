@@ -24,6 +24,10 @@ library:
     - RebindableSyntax
 
   dependencies:
+    - base-noprelude >= 4.7 && < 5
+    - containers
+    - indigo
+    - lorentz
     - morley-prelude
 
 executables:
@@ -38,7 +42,10 @@ tests:
     <<: *test-common
 
     dependencies:
-      - HUnit
+      - containers
+      - globacap
+      - lorentz
+      - morley
       - morley-prelude
       - tasty
       - tasty-hunit-compat

@@ -21,11 +21,13 @@ _definitions:
         - ConstraintKinds
         - DataKinds
         - DefaultSignatures
+        - DeriveAnyClass
         - DeriveDataTypeable
         - DeriveFoldable
         - DeriveFunctor
         - DeriveGeneric
         - DeriveTraversable
+        - DerivingStrategies
         - EmptyCase
         - FlexibleContexts
         - FlexibleInstances
