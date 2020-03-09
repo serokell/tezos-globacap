@@ -5,12 +5,13 @@ resolver: lts-14.15
 packages:
 - .
 
+
 extra-deps:
 - git:
     https://gitlab.com/morley-framework/morley.git
     # ^ CI cannot use ssh, so we use http clone here
   commit:
-    d9741827ffb1c31659f9caf0789c239bbcf6aed8 # master
+    1a4736c27736c8068adc67cbae7f589bb35e8380 # master
   subdirs:
     - code/morley
     - code/indigo
