@@ -3,6 +3,7 @@
 -- SPDX-License-Identifier: LicenseRef-Proprietary
 module Indigo.Contracts.Holdings.Impl
   ( holdingsContract
+  , holdingsDoc
   ) where
 
 import Indigo
@@ -35,20 +36,32 @@ ensureIsTransferable = do
 holdingsContract :: ContractCode Parameter Storage
 holdingsContract = optimizeLorentz $ compileIndigoContract holdingsIndigo
 
+holdingsDoc :: ContractDoc
+holdingsDoc = buildLorentzDoc holdingsContract
+
 holdingsIndigo
   :: (HasStorage Storage, HasSideEffects)
   => Var Parameter -> IndigoProcedure
-holdingsIndigo param = do
-  entryCase (Proxy @PlainEntryPointsKind) param
+holdingsIndigo param = contractName "Holdings" $ do
+  contractGeneral $ doc DGitRevisionUnknown
+  doc $ DDescription
+    "This contract is used to distribute the token, it is optionally regulated by \
+    \the Safelist contract."
+  entryCaseSimple param
     ( #cSetName //-> \newName -> do
+        doc $ DDescription "Change token name."
         ensureSenderIsAdmin
         ensureNotPaused
         setStorageField @Storage #tokenName $ UnName #newName newName
     , #cSetSymbol //-> \newSymbol -> do
+        doc $ DDescription "Change token symbol."
         ensureSenderIsAdmin
         ensureNotPaused
         setStorageField @Storage #tokenSymbol $ UnName #newSymbol newSymbol
     , #cSetSafelistAddress //-> \newMbSafelistAddrNamed -> do
+        doc $ DDescription
+          "Change Safelist contract address. Note that address should explicitly \
+          \point to 'ensureSafelistConstraints' Safelist entrypoint."
         ensureSenderIsOwner
         let newMbSafelistAddr = UnName #newMbSafelistAddress newMbSafelistAddrNamed
         setStorageField @Storage #mbSafelistAddress newMbSafelistAddr
@@ -69,10 +82,12 @@ holdingsIndigo param = do
                 ) (() <$ failCustom #invalidSafelistAddr [mt|assertReceivers|])
           )
     , #cTransferAdminRights //-> \newAdmin -> do
+        doc $ DDescription "Transfer admin rights to the new address."
         ensureSenderIsOwner
         ensureNotPaused
         setStorageField @Storage #mbNewAdmin $ some $ UnName #newAdmin newAdmin
     , #cAcceptAdminRights //-> \_unit -> do
+        doc $ DDescription "Accept admin rights by the new admin."
         ifJust (storage !. #fields !. #mbNewAdmin)
           (\newAdmin ->
               if newAdmin /=. sender
@@ -83,6 +98,8 @@ holdingsIndigo param = do
           )
           (() <$ failCustom_ #notInTransferAdminRightsMode)
     , #cIsAdmin //-> \v -> do
+        doc $ DDescription
+          "Check whether address is admin. Returns `True` if the address is the admin."
         project v $ \addr -> return $ (storage !. #fields !. #admin) ==. addr
     , #cTransfer //-> \tParams -> do
         ensureSenderIsAdmin
@@ -112,6 +129,7 @@ holdingsIndigo param = do
         -- admin check is already done in Lorentz code
         burn bParams
     , #cBurnAll //-> \_ -> do
+        doc $ DDescription "Destroy all tokens and allowances."
         ensureSenderIsAdmin
         ensureNotPaused
         setField_ storage #ledger emptyBigMap
@@ -120,9 +138,11 @@ holdingsIndigo param = do
         let paused = UnName #value pausedNamed
         setPause paused
     , #cSetTransferable //-> \transferable -> do
+        doc $ DDescription "Change transferable flag."
         ensureSenderIsAdmin
         setStorageField @Storage #transferable $ UnName #value transferable
     , #cGetTokenMeta //-> \v -> do
+        doc $ DDescription "Get token meta data: name, symbol and id."
         project v $ \_ -> return (storage !. #fields !. #tokenMeta)
     )
 

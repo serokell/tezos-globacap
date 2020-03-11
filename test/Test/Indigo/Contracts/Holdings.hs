@@ -10,6 +10,7 @@ module Test.Indigo.Contracts.Holdings
   , test_transfer
   , test_burnAndBurnAll
   , test_setPauseAndSetTransferable
+  , test_documentation
   , unit_FA1'2_is_implemented
   ) where
 
@@ -403,3 +404,6 @@ test_setPauseAndSetTransferable = testGroup "Test SetPause and SetTransferable e
 unit_FA1'2_is_implemented :: Assertion
 unit_FA1'2_is_implemented =
   expectContractEntrypoints @AL.Parameter holdingsContract
+
+test_documentation :: [TestTree]
+test_documentation = runDocTests testLorentzDoc holdingsDoc
