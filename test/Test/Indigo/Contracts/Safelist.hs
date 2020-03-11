@@ -8,18 +8,12 @@ module Test.Indigo.Contracts.Safelist
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
-import Lorentz (Address, TAddress(..))
 import Lorentz.Test
 import Michelson.Runtime.GState (genesisAddress, genesisAddress1, genesisAddress2)
-import Tezos.Core (toMutez)
 import Util.Named ((.!))
 
 import Indigo.Contracts.Safelist
-
-originateSafelist
-  :: [(Address, Address)] -> [Address] -> IntegrationalScenarioM (TAddress Parameter)
-originateSafelist transfers receivers =
-  lOriginate safelistContract "safelist" (mkStorage transfers receivers) (toMutez 0)
+import Test.Indigo.Contracts.Common
 
 test_dummySafelist :: TestTree
 test_dummySafelist = testGroup "Test Dummy Safelist contract"

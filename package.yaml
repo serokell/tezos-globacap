@@ -47,6 +47,7 @@ tests:
       - globacap
       - lorentz
       - morley
+      - morley-ledgers
       - morley-prelude
       - tasty
       - tasty-hunit-compat
