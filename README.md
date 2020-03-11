@@ -6,7 +6,7 @@
 
 # Tezos Globacap
 
-Tezos TBD project provides two entities:
+Tezos Globacap project provides two entities:
 * Safelist contract which is used to restrict and regulate share transfers.
 * Holdings contract which is used to distribute the token and optionally regulated by the
   safelist contract.
