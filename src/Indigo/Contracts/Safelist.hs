@@ -14,6 +14,8 @@ import Indigo
 
 import Data.Set (fromList)
 
+import Indigo.Contracts.Common.Error ()
+
 data Storage = Storage
   { sTransfers :: [(Address, Address)]
   , sReceivers :: Set Address
