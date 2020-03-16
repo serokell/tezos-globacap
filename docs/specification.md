@@ -32,18 +32,28 @@ This contract implements regulatory service for the **Holdings** contract.
 
 Approximate storage structure:
 ```haskell
-data Storage = Storage
-  { name :: MText
-  , symbol :: MText
-  , id :: MText
-  , safelistAddress :: Maybe Address
+type Storage = StorageSkeleton StorageFields
+
+data StorageSkeleton fields = StorageSkeleton
+  { ledger :: BigMap Address LedgerValue
+  , fields :: fields
+  }
+
+data StorageFields = StorageFields
+  { tokenMeta :: TokenMeta
+  , mbSafelistAddress :: Maybe Address
   , owner :: Address
   , admin :: Address
-  , ledger :: BigMap Address (Map Address Natural, Natural)
+  , mbNewAdmin :: Maybe Address
   , paused :: Bool
   , transferable :: Bool
-  , totalMinted :: Natural
-  , totalBurned :: Natural
+  , totalSupply :: Natural
+  }
+
+data TokenMeta = TokenMeta
+  { tmName :: MText
+  , tmSymbol :: MText
+  , tmId :: MText
   }
 ```
 
@@ -54,7 +64,7 @@ Required `Holdings` entrypoints:
 * `setSymbol (string :newSymbol)`
   * Description: updates `symbol` field.
   * Constraints: `onlyAdmin` `isNotPaused`.
-* `setSafelistAddress ((option address) :mbNewSafelistAddress)`
+* `setSafelistAddress ((option address) :newMbSafelistAddress)`
   * Description: updates `safelistAddress` field, which is used for safelist contract calls.
   * Constraints: `onlyOwner`.
 * `transferAdminRights (address :newAdmin)`
@@ -90,9 +100,13 @@ Required `Holdings` entrypoints:
 * `burnAll ()`
   * Description: burn all tokens and remove all approvals.
   * Constraints: `onlyAdmin`, `isNotPaused`.
-* `setPause (bool)`
+* `setPause (bool :value)`
   * Description: pause/unpause the contract. When paused no transactions should be possible on this contract.
   * Constraints: `onlyAdmin`.
-* `setTransferable (bool: value)`
+* `setTransferable (bool :value)`
   * Description: update `transferable` flag. When this flag is set to false, transfers should not be possible.
   * Constraints: `onlyAdmin`.
+
+Additional `Holdings` entrypoints used for testing:
+* `getTokenMeta (view () (string, string, string))`
+  * Description: returns current token meta information (its name, symbol and id).
