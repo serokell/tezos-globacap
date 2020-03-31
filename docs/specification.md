@@ -9,53 +9,23 @@ on Hyperledger to Tezos. This means investors can have immediate liquidity
 of the corresponding investment. This document explains the framework of the
 smart contract.
 
-To restrict and regulate share transfers `Safelist` contract is used.
+There are two contracts:
+1. `Safelist` contract is used to restrict and regulate share transfers.
+2. `Holdings` contract is a token contract compliant with with FA1.2 interface.
+
+We only implement the `Holdings` contract and describe all its entrypoints below.
+`Safelist` contract should be implemented separately, here we only describe its entrypoints that are used in the `Holdings` contract.
 
 ## Safelist contract
 
-Only admin can access all non-view functions.
-
-Approximate storage structure:
-```haskell
-data Storage = Storage
-  { owner :: Address
-  , admins :: Set Address
-  , whitelist :: Set Address
-  , blacklist :: Set Address
-  }
-```
-
-Required `Safelist` entrypoint:
-* `addAdmin (address)`
-  * Description: adds address to `admins`.
-  * Constraints: `onlyOwner`.
-* `removeAdmin (address)` onlyOwner.
-  * Description: removes address from `admins`.
-  * Constraints: `onlyOwner`.
-* `isAdmin (view address bool)`
-  * Description: returns `True` if the address is admin.
-* `addToWhitelist (address)` onlyAdmin.
-  * Description: adds address to `whitelist`.
-  * Constraints: `onlyAdmin`.
-* `removeFromWhitelist (address)` onlyAdmin.
-  * Description: removes address from `whitelist`.
-  * Constraints: `onlyAdmin`.
-* `isWhitelisted (view address bool)`
-  * Description: returns `True` if the address is whitelisted.
-* `addToBlacklist (address)` onlyAdmin.
-  * Description: adds address to `blacklist`.
-  * Constraints: `onlyAdmin`.
-* `removeFromBlacklist (address)` onlyAdmin.
-  * Description: removes address from `blacklist`.
-  * Constraints: `onlyAdmin`.
-* `isBlacklisted (view address bool)`
-  * Description: returns `True` if the address is blacklisted.
-
-Additionaly, it would be nice to have the following entrypoint:
-* `checkConstraints (((list address) :isWhitelisted), ((list address) :isNonBlacklisted))`.
-  * Description: check for all addresses to be whitelisted in the former list, check
-    for all addresses to be nonblacklisted in the latter list. Do nothing if everything
-    is satisfied, fail otherwise.
+Required `Safelist` entrypoints (used by `Holdings`):
+* `assertTransfer (pair (address :from) (address :to))`
+  * Checks whether a transfer is permitted from one address to the other one. Fails if it is not.
+* `assertReceiver (address)`
+  * Checks whether an address is whitelisted and is not blacklisted.
+  Fails if it is not whitelisted or it is blacklisted.
+* `assertNotBlacklisted (address)`
+  * Fails if an address is blacklisted.
 
 This contract implements regulatory service for the **Holdings** conract.
 
@@ -67,7 +37,7 @@ data Storage = Storage
   { name :: MText
   , symbol :: MText
   , id :: MText
-  , safelistAddress :: Maybe (TAddress Safelist.Storage)
+  , safelistAddress :: Maybe Address
   , owner :: Address
   , admin :: Address
   , ledger :: BigMap Address (Map Address Natural, Natural)
@@ -100,11 +70,11 @@ Required `Holdings` entrypoints:
 * `transfer (address :from, address :to, nat :value)`
   * Description: transfer given amount of tokens from one address to another.
   * Constraints: `onlyAdmin`, `isNotPaused`, `isTransferable`.
-  * Safelist constraints: `sender` is whitelisted, `sender` and `receiver` are nonblacklisted.
+  * Safelist constraints: `assertTransfer` passes.
 * `approve (address :spender, nat :value)`
   * Description: approve given amout of token to be spent by given address from `sender`.
   * Constraints: `isNotPaused`.
-  * Safelist constraints: `spender` is whitelisted, `spender` and `sender` are nonblacklisted.
+  * Safelist constraints: `assertReceiver` passes for `spender`, `assertNotBlacklisted` passes for `SENDER`.
 * `getAllowance (view (address :owner, address :spender) natural)`
   * Description: returns approval amount for two given addresses.
 * `getBalance (view (address :owner) natural)`
@@ -114,7 +84,7 @@ Required `Holdings` entrypoints:
 * `mint (address :investor, nat: value)`
   * Description: mint given amount of tokens to given address.
   * Constraints: `onlyAdmin`, `isNotPaused`.
-  * Safelist constraints: `investor` is whitelisted and nonblacklisted.
+  * Safelist constraints: `assertReceiver` passes for `investor`
 * `burn (address :investor, nat :value)`
   * Description: burn amount given amount of tokens from given address.
   * Constraints: `onlyAdmin`, `isNotPaused`
