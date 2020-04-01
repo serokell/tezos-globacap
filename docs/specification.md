@@ -22,10 +22,9 @@ Required `Safelist` entrypoints (used by `Holdings`):
 * `assertTransfer (pair (address :from) (address :to))`
   * Checks whether a transfer is permitted from one address to the other one. Fails if it is not.
 * `assertReceiver (address)`
-  * Checks whether an address is whitelisted and is not blacklisted.
-  Fails if it is not whitelisted or it is blacklisted.
-* `assertNotBlacklisted (address)`
-  * Fails if an address is blacklisted.
+  * Fails if address is not whitelisted or it is blacklisted.
+* `assertReceivers(list address)`
+  * Fails if any address in the list is not whitelisted or is blacklisted.
 
 This contract implements regulatory service for the **Holdings** conract.
 
@@ -74,7 +73,7 @@ Required `Holdings` entrypoints:
 * `approve (address :spender, nat :value)`
   * Description: approve given amout of token to be spent by given address from `sender`.
   * Constraints: `isNotPaused`.
-  * Safelist constraints: `assertReceiver` passes for `spender`, `assertNotBlacklisted` passes for `SENDER`.
+  * Safelist constraints: `assertReceivers` passes for `spender` and `SENDER`.
 * `getAllowance (view (address :owner, address :spender) natural)`
   * Description: returns approval amount for two given addresses.
 * `getBalance (view (address :owner) natural)`
