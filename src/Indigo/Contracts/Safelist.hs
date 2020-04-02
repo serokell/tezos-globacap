@@ -14,6 +14,8 @@ import Indigo
 
 import Data.Set (fromList)
 
+import Indigo.Contracts.Common.Error ()
+
 data Storage = Storage
   { sTransfers :: [(Address, Address)]
   , sReceivers :: Set Address
@@ -49,7 +51,7 @@ safelistContract = compileIndigoContract safelistIndigo
 
 safelistIndigo
   :: (HasStorage Storage)
-  => Var Parameter -> IndigoProcedure '[Parameter, Storage, Ops]
+  => Var Parameter -> IndigoProcedure
 safelistIndigo param = contractName "Dummy safelist" $ do
   entryCase (Proxy @PlainEntryPointsKind) param
     ( #cAssertTransfer //-> \transfer -> do

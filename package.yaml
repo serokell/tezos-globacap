@@ -26,8 +26,10 @@ library:
   dependencies:
     - base-noprelude >= 4.7 && < 5
     - containers
+    - fmt
     - indigo
     - lorentz
+    - morley-ledgers
     - morley-prelude
 
 executables:
@@ -45,6 +47,7 @@ tests:
       - globacap
       - lorentz
       - morley
+      - morley-ledgers
       - morley-prelude
       - tasty
       - tasty-hunit-compat
