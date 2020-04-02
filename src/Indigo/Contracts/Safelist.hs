@@ -59,9 +59,7 @@ safelistIndigo param = contractName "Dummy safelist" $ do
             toAddr = transfer !. #to
         res <- newVar False
         forEach (storage !. #sTransfers) $ \it ->
-          if (fst it ==. fromAddr) &&. (snd it ==. toAddr)
-          then setVar res True
-          else return ()
+          when ((fst it ==. fromAddr) &&. (snd it ==. toAddr)) $ setVar res True
         assertCustom_ #assertionFailure res
     , #cAssertReceiver //-> \receiver -> do
         assertCustom_ #assertionFailure $ (storage !. #sReceivers) #? receiver
