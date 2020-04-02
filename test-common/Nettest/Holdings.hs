@@ -24,7 +24,7 @@ nettestScenario = uncapsNettest $ do
   receiver :: Address <- newAddress "receiver"
   fakeSender :: Address <- newAddress "fakeSender"
   holdingsAddr :: Address <- originateSimple "Holdings"
-    (mkStorage ownerAddr Nothing dummyMeta) holdingsContract
+    (mkStorage ownerAddr ownerAddr Nothing dummyMeta) holdingsContract
   safelistAddr :: Address <- originateSimple "DummySafelist"
     (SL.mkStorage [(senderAddr, receiver)] [senderAddr, receiver, adminAddr])
     SL.safelistContract

@@ -37,7 +37,7 @@ originateHoldings
   :: Address -> Maybe Address -> IntegrationalScenarioM (TAddress Parameter)
 originateHoldings owner mbSafelist =
   lOriginate holdingsContract "holdings"
-  (mkStorage owner mbSafelist dummyMeta) (toMutez 0)
+  (mkStorage owner owner mbSafelist dummyMeta) (toMutez 0)
 
 ownerAddress :: Address
 ownerAddress = genesisAddress

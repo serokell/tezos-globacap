@@ -89,8 +89,8 @@ dummyMeta = TokenMeta [mt|KekToken|] [mt|Kek|] [mt|Ququareq|]
 
 type Storage = ML.StorageSkeleton StorageFields
 
-mkStorage :: Address -> Maybe Address -> TokenMeta -> Storage
-mkStorage owner mbSafelist meta =
+mkStorage :: Address -> Address -> Maybe Address -> TokenMeta -> Storage
+mkStorage owner admin mbSafelist meta =
   ML.mkStorageSkeleton mempty fields
   where
     fields :: StorageFields
@@ -98,7 +98,7 @@ mkStorage owner mbSafelist meta =
       { tokenMeta = meta
       , mbSafelistAddress = mbSafelist
       , owner = owner
-      , admin = owner
+      , admin = admin
       , mbNewAdmin = Nothing
       , paused = False
       , transferable = True
