@@ -2,12 +2,12 @@
 --
 -- SPDX-License-Identifier: LicenseRef-Proprietary
 {-# OPTIONS_GHC -Wno-orphans #-}
+-- | Dummy implementation for Safelist contract that complies with the specification
 module Indigo.Contracts.Safelist
   ( Parameter (..)
   , Storage (..)
   , mkStorage
   , safelistContract
-  , safelistDoc
   ) where
 
 import Indigo
@@ -15,180 +15,58 @@ import Indigo
 import Data.Set (fromList)
 
 data Storage = Storage
-  { sOwner :: Address
-  , sAdmins :: Set Address
-  , sWhitelist :: Set Address
-  , sBlacklist :: Set Address
+  { sTransfers :: [(Address, Address)]
+  , sReceivers :: Set Address
   }
   deriving stock Generic
   deriving anyclass IsoValue
 
-mkStorage :: Address -> Storage
-mkStorage owner = Storage
-  { sOwner = owner
-  , sAdmins = fromList $ [owner]
-  , sWhitelist = mempty
-  , sBlacklist = mempty
+mkStorage :: [(Address, Address)] -> [Address] -> Storage
+mkStorage transfers receivers = Storage
+  { sTransfers = transfers
+  , sReceivers = fromList receivers
   }
 
 data Parameter
-  = AddAdmin Address
-  | RemoveAdmin Address
-  | IsAdmin (View Address Bool)
-  | AddToWhitelist Address
-  | RemoveFromWhitelist Address
-  | IsWhitelisted (View Address Bool)
-  | AddToBlacklist Address
-  | RemoveFromBlacklist Address
-  | IsBlacklisted (View Address Bool)
-  | EnsureSafelistConstraints EnsureSafelistConstraintsParam
+  = AssertTransfer ("from" :! Address, "to" :! Address)
+  | AssertReceiver Address
+  | AssertReceivers [Address]
   deriving stock Generic
   deriving anyclass IsoValue
-
-type EnsureSafelistConstraintsParam = ("isWhitelisted" :! [Address], "isNonBlacklisted" :! [Address])
 
 instance ParameterHasEntryPoints Parameter where
   type ParameterEntryPointsDerivation Parameter = EpdPlain
 
-type instance ErrorArg "senderIsNotOwner" = ()
+type instance ErrorArg "assertionFailure" = ()
 
-instance CustomErrorHasDoc "senderIsNotOwner" where
+instance CustomErrorHasDoc "assertionFailure" where
   customErrClass = ErrClassActionException
   customErrDocMdCause =
-    "Sender is not the contract owner."
-
-type instance ErrorArg "constraintUnsatisfied" = (Address, MText)
-
-instance CustomErrorHasDoc "constraintUnsatisfied" where
-  customErrClass = ErrClassActionException
-  customErrDocMdCause =
-    "Given constraint for given address wasn't satisfied."
+    "Assertion failed."
 
 safelistContract :: ContractCode Parameter Storage
 safelistContract = compileIndigoContract safelistIndigo
 
 safelistIndigo
-  :: (HasStorage Storage, HasSideEffects)
+  :: (HasStorage Storage)
   => Var Parameter -> IndigoProcedure '[Parameter, Storage, Ops]
-safelistIndigo param = contractName "Safelist" $ do
-  doc $ $mkDGitRevision $ GitRepoSettings $
-    mappend "https://github.com/serokell/tezos-globacap/commit/"
-  doc $ DDescription
-    "This contract implements regulatory service that can be used by other contracts."
+safelistIndigo param = contractName "Dummy safelist" $ do
   entryCase (Proxy @PlainEntryPointsKind) param
-    ( #cAddAdmin /-> \addr -> do
-        doc $ DDescription
-          "Add new admin, if added address is already admin, then nothing happens."
-        ensureSenderIsOwner
-        addOrRemoveFromStorageSet addr #sAdmins Insert
-    , #cRemoveAdmin /-> \addr -> do
-        doc $ DDescription
-          "Remove admin, address is not an admin already, then nothing happens."
-        ensureSenderIsOwner
-        addOrRemoveFromStorageSet addr #sAdmins Remove
-    , #cIsAdmin /-> \v -> do
-        doc $ DDescription
-          "Check whether address is admin. Returns `True` if the address is admin."
-        presentedInStorageSet v #sAdmins
-    , #cAddToWhitelist /-> \addr -> do
-        doc $ DDescription
-          "Add address to whitelist, if added address is already there, then \
-          \nothing happens."
-        ensureSenderIsAdmin
-        addOrRemoveFromStorageSet addr #sWhitelist Insert
-    , #cRemoveFromWhitelist /-> \addr -> do
-        doc $ DDescription
-          "Remove address from whitelist, if added address is already not there, \
-          \then nothing happens."
-        ensureSenderIsAdmin
-        addOrRemoveFromStorageSet addr #sWhitelist Remove
-    , #cIsWhitelisted /-> \v -> do
-        doc $ DDescription
-          "Check whether address is whitelisted. Returns `True` if the address is \
-          \whitelisted."
-        presentedInStorageSet v #sWhitelist
-    , #cAddToBlacklist /-> \addr -> do
-        doc $ DDescription
-          "Add address to blacklist, if added address is already there, then \
-          \nothing happens."
-        ensureSenderIsAdmin
-        addOrRemoveFromStorageSet addr #sBlacklist Insert
-    , #cRemoveFromBlacklist /-> \addr -> do
-        doc $ DDescription
-          "Remove address from blacklist, if added address is already not there, \
-          \then nothing happens."
-        ensureSenderIsAdmin
-        addOrRemoveFromStorageSet addr #sBlacklist Remove
-    , #cIsBlacklisted /-> \v -> do
-        doc $ DDescription
-          "Check whether address is blacklisted. Returns `True` if the address is \
-          \blacklisted."
-        presentedInStorageSet v #sBlacklist
-    , #cEnsureSafelistConstraints /-> \constraints -> do
-        doc $ DDescription $
-          "Check list of constraints. For the first list check that all addresses are \
-          \whitelisted, for the second list check that all addresses are non-blacklisted. \
-          \If all constraints are satisfied, nothing happens, otherwise, it will fail \
-          \on the first unsatisfied constraint."
-        ensureSafelistConstraints constraints
+    ( #cAssertTransfer //-> \transfer -> do
+        let fromAddr = transfer !. #from
+            toAddr = transfer !. #to
+        res <- newVar False
+        forEach (storage !. #sTransfers) $ \it ->
+          if (fst it ==. fromAddr) &&. (snd it ==. toAddr)
+          then setVar res True
+          else return ()
+        assertCustom_ #assertionFailure res
+    , #cAssertReceiver //-> \receiver -> do
+        assertCustom_ #assertionFailure $ (storage !. #sReceivers) #? receiver
+    , #cAssertReceivers //-> \receivers -> do
+        forEach receivers $ \receiver -> do
+          assertCustom_ #assertionFailure $ (storage !. #sReceivers) #? receiver
     )
 
 storage :: HasStorage Storage => Var Storage
 storage = storageVar
-
-data InsertOrRemove = Insert | Remove
-
-ensureSenderIsOwner :: HasStorage Storage => IndigoProcedure s
-ensureSenderIsOwner = do
-  let
-    ownerAddr = storage !. #sOwner
-  if ownerAddr /=. Sender
-  then failCustom_ #senderIsNotOwner
-  else return ()
-
-ensureSenderIsAdmin :: HasStorage Storage => IndigoProcedure s
-ensureSenderIsAdmin = do
-  let
-    admins = storage !. #sAdmins
-  if admins #?. Sender
-  then return ()
-  else failCustom_ #senderIsNotAdmin
-
-ensureSafelistConstraints
-  :: (HasStorage Storage, constraints :~> EnsureSafelistConstraintsParam)
-  => constraints -> IndigoProcedure s
-ensureSafelistConstraints constraints = do
-  let
-    isWhitelistedList = UnName #isWhitelisted $ fst constraints
-    isNonBlacklistedList = UnName #isNonBlacklisted $ snd constraints
-    whitelist = storage !. #sWhitelist
-    blacklist = storage !. #sBlacklist
-  forEach isWhitelistedList $ \it -> do
-    if whitelist #?. it
-    then return ()
-    else failCustom #constraintUnsatisfied $ pair it $ [mt|nonWhitelisted|]
-  forEach isNonBlacklistedList $ \it -> do
-    if blacklist #?. it
-    then failCustom #constraintUnsatisfied $ pair it $ [mt|blacklisted|]
-    else return ()
-
-presentedInStorageSet
-  :: forall setName s.
-     (HasFieldOfType Storage setName (Set Address), HasStorage Storage, HasSideEffects)
-  => Var (View Address Bool) -> Label setName -> IndigoProcedure s
-presentedInStorageSet v setName =
-  flip view_ v $ \addr -> return $ (storage !. setName) #?. addr
-
-addOrRemoveFromStorageSet
-  :: forall setName s. (HasFieldOfType Storage setName (Set Address), HasStorage Storage)
-  => Var Address -> Label setName -> InsertOrRemove -> IndigoProcedure s
-addOrRemoveFromStorageSet addr setName insertOrRemove = do
-  let
-    requiredSet = storage !. setName
-    newSet = case insertOrRemove of
-      Insert -> requiredSet #~. addr
-      Remove -> requiredSet #-. addr
-  setField_ storage setName newSet
-
-safelistDoc :: ContractDoc
-safelistDoc = buildLorentzDoc safelistContract

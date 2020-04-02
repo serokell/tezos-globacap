@@ -26,7 +26,7 @@ Required `Safelist` entrypoints (used by `Holdings`):
 * `assertReceivers(list address)`
   * Fails if any address in the list is not whitelisted or is blacklisted.
 
-This contract implements regulatory service for the **Holdings** conract.
+This contract implements regulatory service for the **Holdings** contract.
 
 ## Holdings contract
 

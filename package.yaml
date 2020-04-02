@@ -42,7 +42,6 @@ tests:
     <<: *test-common
 
     dependencies:
-      - containers
       - globacap
       - lorentz
       - morley
