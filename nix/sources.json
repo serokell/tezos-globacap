@@ -1,0 +1,50 @@
+{
+    "xrefcheck": {
+        "branch": "master",
+        "description": "Check cross-references in repository documents",
+        "homepage": "",
+        "owner": "serokell",
+        "repo": "xrefcheck",
+        "rev": "b54c38d91bd45e5c402ebf51d68c653faf959c2c",
+        "sha256": "08317j8zzypwnvdixcby84ccbdzhgli4cpfrms4bpnfnqvcrawfb",
+        "type": "tarball",
+        "url": "https://github.com/serokell/xrefcheck/archive/b54c38d91bd45e5c402ebf51d68c653faf959c2c.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "haskell-nix-weeder": {
+        "branch": "master",
+        "description": "haskell.nix + weeder",
+        "homepage": null,
+        "owner": "serokell",
+        "repo": "haskell-nix-weeder",
+        "rev": "7f11f514b54474c3281b25ac2c09975c918e0492",
+        "sha256": "0nww0cx8sjn8gg5k6371f17kdbp72nmdz34hwa9sxwvrmxzagg2x",
+        "type": "tarball",
+        "url": "https://github.com/serokell/haskell-nix-weeder/archive/7f11f514b54474c3281b25ac2c09975c918e0492.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "haskell.nix": {
+        "branch": "master",
+        "description": "Alternative Haskell Infrastructure for Nixpkgs",
+        "homepage": "https://input-output-hk.github.io/haskell.nix",
+        "owner": "input-output-hk",
+        "repo": "haskell.nix",
+        "rev": "98ac006e995d310c9329787bd93f6c3384174713",
+        "sha256": "01v80m0m59csjacbax8z0k2mlx6vww0wh5qnmgcwdq9zfa5d3g81",
+        "type": "tarball",
+        "url": "https://github.com/input-output-hk/haskell.nix/archive/98ac006e995d310c9329787bd93f6c3384174713.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    },
+    "nixpkgs": {
+        "branch": "master",
+        "description": "Pinned Nixpkgs tree (master follows nixos-unstable-small, only tags have stable history)",
+        "homepage": "",
+        "owner": "serokell",
+        "repo": "nixpkgs",
+        "rev": "45c5124eab8b6272b6d868fefe405d8031c16846",
+        "sha256": "0mrx31aswr58jwdfsklhi945yw6iz2rbqiiapydrz8frfclk9yry",
+        "type": "tarball",
+        "url": "https://github.com/serokell/nixpkgs/archive/45c5124eab8b6272b6d868fefe405d8031c16846.tar.gz",
+        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+    }
+}

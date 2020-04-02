@@ -9,7 +9,7 @@ _definitions:
         author:              Serokell, TBD
         maintainer:          Serokell <hi@serokell.io>
         copyright:           2020 TBD
-        license:             LicenseRef-Proprietary
+        license:             NONE
         license-file:        LICENSE
         git:                 git@github.com:serokell/tezos-globacap.git
         homepage:            https://github.com/serokell/tezos-globacap.git
