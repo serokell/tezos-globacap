@@ -33,6 +33,7 @@
       - name: Module reused between components
       - module:
         - Nettest.Holdings
+        - Nettest.WhitelistIntegration
   - section:
     - name: test:globacap-nettest
     - message:
