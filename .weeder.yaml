@@ -27,3 +27,15 @@
     - message:
       - name: Redundant build-depends entry
       - depends: base-noprelude
+  - section:
+    - name: test:globacap-nettest test:globacap-test
+    - message:
+      - name: Module reused between components
+      - module:
+        - Nettest.Holdings
+  - section:
+    - name: test:globacap-nettest
+    - message:
+      - name: Redundant build-depends entry
+      - depends: base-noprelude
+
