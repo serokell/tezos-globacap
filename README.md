@@ -11,7 +11,13 @@ Tezos Globacap project provides two entities:
 * Holdings contract which is used to distribute the token and optionally regulated by the
   safelist contract.
 
-There is a [specification](/docs/specification.md) for the required smart contracts.
+## Contracts documentation and requirements
+
+The [requirements](docs/requirements.md) document lists all the requirements for the Holdings
+and Safelist smart contracts.
+
+Documentation of the actually implemented Holdings contract is generated automatically and
+can be found [here](https://github.com/serokell/tezos-globacap/blob/autodoc/master/Holdings-contract.md).
 
 ## Build Instructions
 
