@@ -68,11 +68,11 @@ steps:
     commands:
     - mkdir tmp
     - if [ "$BUILDKITE_BRANCH" = "master" ];
-      then CONTRACT_DOC_STEP="contract doc development";
-      else CONTRACT_DOC_STEP="contract doc release";
+      then CONTRACT_DOC_STEP="contract doc release";
+      else CONTRACT_DOC_STEP="contract doc development";
       fi
     - buildkite-agent artifact download Holdings-contract.md tmp/
-        --step "$CONTRACT_DOC_STEP"
+        --step "$$CONTRACT_DOC_STEP"
     - nix run -f ci.nix xrefcheck -c xrefcheck
         --mode local-only --root tmp
     soft_fail: true
@@ -84,3 +84,11 @@ steps:
       # weeder needs .cabal file:
     - nix run -f ci.nix pkgs.haskellPackages.hpack -c hpack
     - ./result
+
+  - label: autodoc upload
+    branches: master
+    commands:
+    - mkdir tmp
+    - buildkite-agent artifact download Holdings-contract.md tmp/
+        --step "contract doc release"
+    - ./scripts/ci/upload-autodoc.sh
