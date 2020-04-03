@@ -18,7 +18,6 @@ import Paths_globacap (version)
 import qualified Lorentz as L
 import Lorentz (mt)
 import Lorentz.ContractRegistry
-import Michelson.Typed (starNotes)
 import Morley.CLI (addressOption, mTextOption)
 import Tezos.Address (Address)
 import Util.CLI (mkCLOptionParser)
@@ -53,7 +52,7 @@ contracts = ContractRegistry $ Map.fromList
     , ciIsDocumented = True
     , ciStorageParser = Just holdingsStorageParser
     , ciCompilationOptions = L.defaultCompilationOptions
-    , ciStorageNotes = starNotes
+    , ciStorageNotes = H.storageNotes
     }
   ]
 
