@@ -96,7 +96,6 @@ rec {
   all-components = with pkgs.lib; flatten (attrValues components);
 
   # run globacap to produce contract documents
-  # TODO: #4
   contracts-doc = { release, commitSha ? null, commitDate ? null }@releaseArgs:
     pkgs.runCommand "contracts-doc" {
       buildInputs = [ (hs-pkgs releaseArgs).globacap.components.exes.globacap ];

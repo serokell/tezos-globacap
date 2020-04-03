@@ -30,6 +30,7 @@ library:
     - fmt
     - indigo
     - lorentz
+    - morley
     - morley-ledgers
     - morley-prelude
 
@@ -38,7 +39,13 @@ executables:
     <<: *exec-common
 
     dependencies:
+      - containers
+      - lorentz
+      - morley
       - morley-prelude
+      - optparse-applicative
+      - globacap
+      - with-utf8
 
 tests:
   globacap-test:

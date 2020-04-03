@@ -8,6 +8,7 @@ module Indigo.Contracts.Holdings.Types
   , TokenMeta (..)
   , dummyMeta
   , mkStorage
+  , storageNotes
   )
 where
 
@@ -18,6 +19,8 @@ import Fmt (Buildable(..), (+|), (|+))
 import qualified Lorentz.Contracts.ManagedLedger.Types as ML
 import qualified Lorentz.Contracts.Spec.ManagedLedgerInterface as ML
 import Lorentz.TypeAnns (HasTypeAnn)
+import Michelson.Typed (Notes(..), starNotes)
+import Michelson.Untyped (ann, noAnn)
 
 data StorageFields = StorageFields
   { tokenMeta :: TokenMeta
@@ -89,8 +92,30 @@ dummyMeta = TokenMeta [mt|KekToken|] [mt|Kek|] [mt|Ququareq|]
 
 type Storage = ML.StorageSkeleton StorageFields
 
-mkStorage :: Address -> Maybe Address -> TokenMeta -> Storage
-mkStorage owner mbSafelist meta =
+storageNotes :: Notes (ToT Storage)
+storageNotes = NTPair noAnn (ann "ledger") noAnn
+  (NTBigMap noAnn noAnn ledgerEntryNotes)
+  (NTPair noAnn noAnn noAnn
+    (NTPair noAnn noAnn noAnn
+      (NTPair noAnn (ann "tokenMeta") (ann "mbSafelistAddress") tokenMetaNotes starNotes)
+      (NTPair noAnn (ann "owner") (ann "admin") starNotes starNotes)
+    )
+    (NTPair noAnn noAnn noAnn
+      (NTPair noAnn (ann "mbNewAdmin") (ann "paused") starNotes starNotes)
+      (NTPair noAnn (ann "transferable") (ann "totalSupply") starNotes starNotes)
+    )
+  )
+
+tokenMetaNotes :: Notes (ToT TokenMeta)
+tokenMetaNotes = NTPair noAnn (ann "name") noAnn
+  starNotes
+  (NTPair noAnn (ann "symbol") (ann "id") starNotes starNotes)
+
+ledgerEntryNotes :: Notes (ToT ML.LedgerValue)
+ledgerEntryNotes = NTPair noAnn (ann "balance") (ann "approvals") starNotes starNotes
+
+mkStorage :: Address -> Address -> Maybe Address -> TokenMeta -> Storage
+mkStorage owner admin mbSafelist meta =
   ML.mkStorageSkeleton mempty fields
   where
     fields :: StorageFields
@@ -98,7 +123,7 @@ mkStorage owner mbSafelist meta =
       { tokenMeta = meta
       , mbSafelistAddress = mbSafelist
       , owner = owner
-      , admin = owner
+      , admin = admin
       , mbNewAdmin = Nothing
       , paused = False
       , transferable = True

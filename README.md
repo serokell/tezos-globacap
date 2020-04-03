@@ -20,6 +20,16 @@ You can use `stack build` to build `globacap` executable.
 ## Usage
 
 Run `stack exec -- globacap --help` to see available commands.
+This executable allows you to print Holdings contract, its documentation and
+its initial storage value.
+
+In order to originate any contract or submit transactions you need additional software, for example `tezos-client`.
+For Linux you can get it from the [tezos-packaging](https://github.com/serokell/tezos-packaging) repository.
+
+For example, to originate Holdings contract do the following:
+1. Print it to a file by passing `print -n Holdings -o Holdings.tz` to `globacap`.
+2. Generate its initial storage using `storage-Holdings` command.
+3. Use `tezos-client originate` command to originate the contract.
 
 ## Issue Tracker
 

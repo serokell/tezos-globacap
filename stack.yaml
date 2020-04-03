@@ -57,5 +57,8 @@ extra-deps:
 - dependent-sum-template-0.1.0.0
 - constraints-extras-0.3.0.2@sha256:bf6884be65958e9188ae3c9e5547abfd6d201df021bff8a4704c2c4fe1e1ae5b
 
+# Required by globacap
+- with-utf8-1.0.0.0@sha256:686e47588986d8080451b4e617118b579487dd4e085bba7bb36fac4198c90ae6
+
 nix:
   shell-file: shell.nix
