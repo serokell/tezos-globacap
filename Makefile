@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2020 TBD
 # SPDX-License-Identifier: LicenseRef-Proprietary
-.PHONY: build test test-ci haddock haddock-no-deps stylish lint clean all
+.PHONY: build test test-ci nettest haddock haddock-no-deps stylish lint clean all
 
 # Build target from the common utility Makefile
 MAKEU = $(MAKE) -C make/
@@ -42,6 +42,13 @@ test-dumb-term:
 # because otherwise this option is likely to work incorrectly.
 test-hide-successes:
 	TERM=dumb $(call call_test,"--hide-successes",$(STACK_DEV_TEST_OPTIONS))
+
+# Run network tests
+nettest:
+	stack test globacap:globacap-nettest \
+		--test-arguments "$(TEST_ARGUMENTS)" \
+		$(STACK_DEV_TEST_OPTIONS)
+
 
 # Run haddock for all packages.
 haddock:

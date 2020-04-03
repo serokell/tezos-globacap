@@ -12,8 +12,10 @@ module Test.Indigo.Contracts.Holdings
   , test_setPauseAndSetTransferable
   , test_documentation
   , unit_FA1'2_is_implemented
+  , unit_nettest_scenario
   ) where
 
+import Test.Hspec (Expectation)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, testCase)
 
@@ -22,11 +24,13 @@ import qualified Lorentz.Contracts.ManagedLedger.Types as ML
 import qualified Lorentz.Contracts.Spec.ApprovableLedgerInterface as AL
 import Lorentz.Test
 import Michelson.Runtime.GState (genesisAddress, genesisAddress1, genesisAddress2)
+import Morley.Nettest
 import Tezos.Core (toMutez)
 import Util.Named ((.!))
 
 import Indigo.Contracts.Holdings
 
+import Nettest.Holdings
 import Test.Indigo.Contracts.Common
 
 originateHoldings
@@ -407,3 +411,7 @@ unit_FA1'2_is_implemented =
 
 test_documentation :: [TestTree]
 test_documentation = runDocTests testLorentzDoc holdingsDoc
+
+unit_nettest_scenario :: Expectation
+unit_nettest_scenario =
+  integrationalTestExpectation $ nettestToIntegrational nettestScenario

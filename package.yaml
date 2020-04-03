@@ -43,12 +43,30 @@ executables:
 tests:
   globacap-test:
     <<: *test-common
+    source-dirs:
+      - test-common
+      - test
+
+    dependencies:
+      - globacap
+      - hspec
+      - lorentz
+      - morley
+      - morley-ledgers
+      - morley-nettest
+      - morley-prelude
+      - tasty
+      - tasty-hunit-compat
+
+  globacap-nettest:
+    <<: *test-common
+    source-dirs:
+      - test-common
+      - nettest
 
     dependencies:
       - globacap
       - lorentz
       - morley
-      - morley-ledgers
+      - morley-nettest
       - morley-prelude
-      - tasty
-      - tasty-hunit-compat
