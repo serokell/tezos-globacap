@@ -8,9 +8,9 @@ module Nettest.WhitelistIntegration
 import qualified Data.Map as Map (fromList)
 import qualified Data.Set as Set (fromList)
 
-import Lorentz hiding (sender)
+import Lorentz.Address
 import Michelson.Typed.Convert (untypeValue)
-import Michelson.Typed.Haskell.Value (IsoValue(..))
+import Michelson.Typed.Haskell.Value (BigMap(..), IsoValue(..))
 import qualified Michelson.Untyped as U
 import Morley.Nettest
 import Morley.Nettest.Caps (originateUntypedSimple)
@@ -32,8 +32,13 @@ data WhitelistStorage = WhitelistStorage
 mkWhitelistStorage
   :: Address -> [(Address, WhitelistId)] -> [(WhitelistId, (Bool, Set WhitelistId))]
   -> WhitelistStorage
-mkWhitelistStorage issuer users whitelists = WhitelistStorage issuer
-  (BigMap $ Map.fromList users) (BigMap $ Map.fromList whitelists) issuer
+mkWhitelistStorage issuer users whitelists =
+  WhitelistStorage
+  { wsIssuer = issuer
+  , wsUsers = BigMap $ Map.fromList users
+  , wsWhitelists = BigMap $ Map.fromList whitelists
+  , wsAdmin = issuer
+  }
 
 whitelistScenario :: U.Contract -> NettestScenario
 whitelistScenario whitelistContract = uncapsNettest $ do
@@ -84,11 +89,11 @@ whitelistScenario whitelistContract = uncapsNettest $ do
       (#spender .! fakeSender, #value .! (10 :: Natural))
     )
     NettestFailedWith
-  callFrom owner holdings (ep "setPause") True
   comment "Unacceptable transfer"
   expectFailure
     (callFrom owner holdings (ep "transfer")
       (#from .! senderAddr, #to .! fakeSender, #value .! (200 :: Natural))
     )
     NettestFailedWith
+  -- Otherwise scenario is considered as empty by integrational test engine
   callFrom owner holdings (ep "setPause") True

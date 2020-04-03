@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2020 Michael J. Klein, Tocqueville Group
 # SPDX-License-Identifier: LicenseRef-BSD-3-Clause-MichaelJKlein
 
+# Built from https://github.com/tqtezos/lorentz-contract-whitelist/tree/2d417bbe3e4c59d1b5b80c42eb0d8165746e7bad
+
 parameter (or (or (pair %assertTransfer address
                         address)
                   address %assertReceiver)
