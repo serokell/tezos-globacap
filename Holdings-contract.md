@@ -1,0 +1,854 @@
+# Holdings
+
+**Code revision:** [eed429c](https://github.com/serokell/tezos-globacap/blob/eed429c2e6e6c12114ba21818605b258c2ea9f75) *(Fri Apr 3 19:16:58 2020 +0300)*
+
+
+
+This contract is used to distribute the token, it is optionally regulated by the Safelist contract.
+
+## Entrypoints
+
+---
+
+### `setName`
+
+Change token name.
+
+**Argument:** 
+  + **In Haskell:** ***newName*** : [`Text`](#types-Text)
+  + **In Michelson:** `(string :newName)`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `setName` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Pausable:** Cannot be executed when token operations are paused.
+
+**Possible errors:**
+* [`SenderIsNotAdmin`](#errors-SenderIsNotAdmin) — Entrypoint executed not by its administrator.
+
+* [`TokenOperationsArePaused`](#errors-TokenOperationsArePaused) — Token functionality (`transfer` and similar entrypoints) is suspended.
+
+
+
+---
+
+### `setSymbol`
+
+Change token symbol.
+
+**Argument:** 
+  + **In Haskell:** ***newSymbol*** : [`Text`](#types-Text)
+  + **In Michelson:** `(string :newSymbol)`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `setSymbol` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Pausable:** Cannot be executed when token operations are paused.
+
+**Possible errors:**
+* [`SenderIsNotAdmin`](#errors-SenderIsNotAdmin) — Entrypoint executed not by its administrator.
+
+* [`TokenOperationsArePaused`](#errors-TokenOperationsArePaused) — Token functionality (`transfer` and similar entrypoints) is suspended.
+
+
+
+---
+
+### `setSafelistAddress`
+
+Change Safelist contract address. Note that address should explicitly point to 'ensureSafelistConstraints' Safelist entrypoint.
+
+**Argument:** 
+  + **In Haskell:** ***newMbSafelistAddress*** : [`Maybe`](#types-Maybe) [`Address`](#types-Address-simplified)
+  + **In Michelson:** `(option :newMbSafelistAddress address)`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `setSafelistAddress` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Possible errors:**
+* [`SenderIsNotOwner`](#errors-SenderIsNotOwner) — Sender is not the contract owner.
+
+* [`InvalidSafelistAddr`](#errors-InvalidSafelistAddr) — New safelist address doesn't have required entrypoint
+
+
+
+---
+
+### `transferAdminRights`
+
+Transfer admin rights to the new address.
+
+**Argument:** 
+  + **In Haskell:** ***newAdmin*** : [`Address`](#types-Address-simplified)
+  + **In Michelson:** `(address :newAdmin)`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `transferAdminRights` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Pausable:** Cannot be executed when token operations are paused.
+
+**Possible errors:**
+* [`SenderIsNotOwner`](#errors-SenderIsNotOwner) — Sender is not the contract owner.
+
+* [`TokenOperationsArePaused`](#errors-TokenOperationsArePaused) — Token functionality (`transfer` and similar entrypoints) is suspended.
+
+
+
+---
+
+### `acceptAdminRights`
+
+Accept admin rights by the new admin.
+
+**Argument:** 
+  + **In Haskell:** [`()`](#types-lparenrparen)
+  + **In Michelson:** `unit`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `acceptAdminRights` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Possible errors:**
+* [`NotInTransferAdminRightsMode`](#errors-NotInTransferAdminRightsMode) — Cannot accept admin rights before transfer process has been initiated by calling transferAdminRights entrypoint.
+
+* [`SenderIsNotNewAdmin`](#errors-SenderIsNotNewAdmin) — Cannot accept admin rights because the sender address is different from the address passed to the transferadminRights entrypoint previously.
+
+
+
+---
+
+### `isAdmin`
+
+Check whether address is admin. Returns `True` if the address is the admin.
+
+**Argument:** 
+  + **In Haskell:** [`View`](#types-View) [`Address`](#types-Address-simplified) [`Bool`](#types-Bool)
+  + **In Michelson:** `(pair address (contract bool))`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `isAdmin` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+
+
+---
+
+### `transfer`
+
+Transfers tokens between two given accounts.
+
+This entrypoint serves multiple purposes:
+* When called with `"from"` account equal to the transaction sender, we assume that
+the user transfers their own money and this does not require approval.
+* Otherwise, the transaction sender must be previously authorized to transfer at least the requested number of tokens from the `"from"` account using the `approve` entrypoint.
+In this case current number of tokens that sender is allowed to withdraw from the `"from"` address is decreased by the number of transferred tokens.
+
+
+
+**Argument:** 
+  + **In Haskell:** (***from*** : [`Address`](#types-Address-simplified), ***to*** : [`Address`](#types-Address-simplified), ***value*** : [`Natural`](#types-Natural))
+  + **In Michelson:** `(pair (address :from) (pair (address :to) (nat :value)))`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `transfer` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Pausable:** Cannot be executed when token operations are paused.
+
+**Possible errors:**
+* [`SenderIsNotAdmin`](#errors-SenderIsNotAdmin) — Entrypoint executed not by its administrator.
+
+* [`NonTransferable`](#errors-NonTransferable) — Transferable flag is false.
+
+* [`InvalidSafelistAddr`](#errors-InvalidSafelistAddr) — New safelist address doesn't have required entrypoint
+
+* [`TokenOperationsArePaused`](#errors-TokenOperationsArePaused) — Token functionality (`transfer` and similar entrypoints) is suspended.
+
+* [`NotEnoughAllowance`](#errors-NotEnoughAllowance) — Not enough funds allowance to perform the operation.
+
+* [`NotEnoughBalance`](#errors-NotEnoughBalance) — Not enough funds to perform the operation.
+
+
+
+---
+
+### `approve`
+
+When called with `(address :spender, nat :value)`
+parameters allows `spender` account to withdraw from the sender, multiple times,
+up to the `value` amount.
+Each call of `transfer` entrypoint decreases the allowance amount on the transferred amount of tokens unless `transfer` is called with `from` account equal to sender.
+
+If this entrypoint is called again, it overwrites the current allowance
+with `value`.
+
+Changing allowance value from non-zero value to a non-zero value is
+forbidden to prevent the [corresponding attack vector](https://docs.google.com/document/d/1YLPtQxZu1UAvO9cZ1O2RPXBbT0mooh4DYKjA_jp-RLM).
+
+
+**Argument:** 
+  + **In Haskell:** (***spender*** : [`Address`](#types-Address-simplified), ***value*** : [`Natural`](#types-Natural))
+  + **In Michelson:** `(pair (address :spender) (nat :value))`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `approve` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Pausable:** Cannot be executed when token operations are paused.
+
+**Possible errors:**
+* [`InvalidSafelistAddr`](#errors-InvalidSafelistAddr) — New safelist address doesn't have required entrypoint
+
+* [`TokenOperationsArePaused`](#errors-TokenOperationsArePaused) — Token functionality (`transfer` and similar entrypoints) is suspended.
+
+* [`UnsafeAllowanceChange`](#errors-UnsafeAllowanceChange) — Allowance change from non-zero value to non-zero value is performed.
+
+
+
+---
+
+### `getAllowance`
+
+Returns the approval value between two given addresses.
+
+**Argument:** 
+  + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address`](#types-Address-simplified), ***spender*** : [`Address`](#types-Address-simplified)) [`Natural`](#types-Natural)
+  + **In Michelson:** `(pair (pair (address :owner) (address :spender)) (contract nat))`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `getAllowance` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+
+
+---
+
+### `getBalance`
+
+Returns the balance of the address in the ledger.
+
+**Argument:** 
+  + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address`](#types-Address-simplified)) [`Natural`](#types-Natural)
+  + **In Michelson:** `(pair (address :owner) (contract nat))`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `getBalance` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+
+
+---
+
+### `getTotalSupply`
+
+Returns total number of tokens.
+
+**Argument:** 
+  + **In Haskell:** [`View`](#types-View) [`()`](#types-lparenrparen) [`Natural`](#types-Natural)
+  + **In Michelson:** `(pair unit (contract nat))`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `getTotalSupply` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+
+
+---
+
+### `mint`
+
+Produces tokens on the account associated with the given address.
+
+**Argument:** 
+  + **In Haskell:** (***to*** : [`Address`](#types-Address-simplified), ***value*** : [`Natural`](#types-Natural))
+  + **In Michelson:** `(pair (address :to) (nat :value))`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `mint` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Authorization:** The sender has to be `administrator`.
+
+**Pausable:** Cannot be executed when token operations are paused.
+
+**Possible errors:**
+* [`TokenOperationsArePaused`](#errors-TokenOperationsArePaused) — Token functionality (`transfer` and similar entrypoints) is suspended.
+
+* [`InvalidSafelistAddr`](#errors-InvalidSafelistAddr) — New safelist address doesn't have required entrypoint
+
+* [`SenderIsNotAdmin`](#errors-SenderIsNotAdmin) — Entrypoint executed not by its administrator.
+
+
+
+---
+
+### `burn`
+
+Destroys the given amount of tokens on the account associated with the given address.
+
+**Argument:** 
+  + **In Haskell:** (***from*** : [`Address`](#types-Address-simplified), ***value*** : [`Natural`](#types-Natural))
+  + **In Michelson:** `(pair (address :from) (nat :value))`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `burn` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Authorization:** The sender has to be `administrator`.
+
+**Pausable:** Cannot be executed when token operations are paused.
+
+**Possible errors:**
+* [`TokenOperationsArePaused`](#errors-TokenOperationsArePaused) — Token functionality (`transfer` and similar entrypoints) is suspended.
+
+* [`SenderIsNotAdmin`](#errors-SenderIsNotAdmin) — Entrypoint executed not by its administrator.
+
+* [`NotEnoughBalance`](#errors-NotEnoughBalance) — Not enough funds to perform the operation.
+
+
+
+---
+
+### `burnAll`
+
+Destroy all tokens and allowances.
+
+**Argument:** 
+  + **In Haskell:** [`()`](#types-lparenrparen)
+  + **In Michelson:** `unit`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `burnAll` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Pausable:** Cannot be executed when token operations are paused.
+
+**Possible errors:**
+* [`SenderIsNotAdmin`](#errors-SenderIsNotAdmin) — Entrypoint executed not by its administrator.
+
+* [`TokenOperationsArePaused`](#errors-TokenOperationsArePaused) — Token functionality (`transfer` and similar entrypoints) is suspended.
+
+
+
+---
+
+### `setPause`
+
+This entrypoint pauses operations when the parameter is `True`,
+and resumes them when the parameter is `False`. During the pause,
+no contract can perform `transfer` or `approval` operations.
+
+
+**Argument:** 
+  + **In Haskell:** ***value*** : [`Bool`](#types-Bool)
+  + **In Michelson:** `(bool :value)`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `setPause` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Authorization:** The sender has to be `administrator`.
+
+**Possible errors:**
+* [`SenderIsNotAdmin`](#errors-SenderIsNotAdmin) — Entrypoint executed not by its administrator.
+
+
+
+---
+
+### `setTransferable`
+
+Change transferable flag.
+
+**Argument:** 
+  + **In Haskell:** ***value*** : [`Bool`](#types-Bool)
+  + **In Michelson:** `(bool :value)`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `setTransferable` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Possible errors:**
+* [`SenderIsNotAdmin`](#errors-SenderIsNotAdmin) — Entrypoint executed not by its administrator.
+
+
+
+---
+
+### `getTokenMeta`
+
+Get token meta data: name, symbol and id.
+
+**Argument:** 
+  + **In Haskell:** [`View`](#types-View) [`()`](#types-lparenrparen) [`TokenMeta`](#types-TokenMeta)
+  + **In Michelson:** `(pair unit (contract (pair string (pair string string))))`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `getTokenMeta` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+
+
+
+
+
+
+# Definitions
+
+## Types
+
+<a name="types-lparenrparen"></a>
+
+---
+
+### `()`
+
+Unit primitive.
+
+**Structure:** ()
+
+**Final Michelson representation:** `unit`
+
+
+
+<a name="types-lparenacomma-brparen"></a>
+
+---
+
+### `(a, b)`
+
+Pair primitive.
+
+**Final Michelson representation (example):** `(Integer,Natural)` = `pair int nat`
+
+
+
+<a name="types-lparenacomma-bcomma-crparen"></a>
+
+---
+
+### `(a, b, c)`
+
+Tuple of size 3.
+
+**Final Michelson representation (example):** `(Integer,Natural,MText)` = `pair int (pair nat string)`
+
+
+
+<a name="types-Address-simplified"></a>
+
+---
+
+### `Address simplified`
+
+This is similar to Michelson Address, but does not retain entrypoint name if it refers to a contract.
+
+**Final Michelson representation:** `address`
+
+
+
+<a name="types-Bool"></a>
+
+---
+
+### `Bool`
+
+Bool primitive.
+
+**Final Michelson representation:** `bool`
+
+
+
+<a name="types-Contract"></a>
+
+---
+
+### `Contract`
+
+Contract primitive with given type of parameter.
+
+**Final Michelson representation (example):** `ContractRef Integer` = `contract int`
+
+
+
+<a name="types-Integer"></a>
+
+---
+
+### `Integer`
+
+Signed number.
+
+**Final Michelson representation:** `int`
+
+
+
+<a name="types-Maybe"></a>
+
+---
+
+### `Maybe`
+
+Option primitive.
+
+**Final Michelson representation (example):** `Maybe Integer` = `option int`
+
+
+
+<a name="types-Named-entry"></a>
+
+---
+
+### `Named entry`
+
+Some entries have names for clarity.
+
+In resulting Michelson names may be mapped to annotations.
+
+**Final Michelson representation (example):** `number: Integer` = `int`
+
+
+
+<a name="types-Natural"></a>
+
+---
+
+### `Natural`
+
+Unsigned number.
+
+**Final Michelson representation:** `nat`
+
+
+
+<a name="types-Text"></a>
+
+---
+
+### `Text`
+
+Michelson string.
+
+This has to contain only ASCII characters with codes from [32; 126] range; additionally, newline feed character is allowed.
+
+**Final Michelson representation:** `string`
+
+
+
+<a name="types-TokenMeta"></a>
+
+---
+
+### `TokenMeta`
+
+Meta information about token.
+
+**Structure:** (***name*** :[`Text`](#types-Text), ***symbol*** :[`Text`](#types-Text), ***id*** :[`Text`](#types-Text))
+
+**Final Michelson representation:** `pair string (pair string string)`
+
+
+
+<a name="types-View"></a>
+
+---
+
+### `View`
+
+`View a r` accepts an argument of type `a` and callback contract which accepts `r` and returns result via calling that contract.
+Read more in [A1 conventions document](https://gitlab.com/tzip/tzip/-/blob/c42e3f0f5e73669e84e615d69bee73281572eb0a/proposals/tzip-4/tzip-4.md#view-entrypoints).
+
+**Structure (example):** `View () Integer` = ([`()`](#types-lparenrparen), [`ContractRef`](#types-Contract) [`Integer`](#types-Integer))
+
+**Final Michelson representation (example):** `View () Integer` = `pair unit (contract int)`
+
+
+
+## Errors
+
+Our contract implies the possibility of error scenarios, this section enlists
+all values which the contract can produce via calling `FAILWITH` instruction
+on them. In case of error, no changes to contract state will be applied.
+
+Each entrypoint also contains a list of errors which can be raised during its
+execution; only for no-throw entrypoints this list will be omitted.
+Errors in these lists are placed in the order in which the corresponding
+properties are checked unless the opposite is specified. I.e., if for a
+given entrypoint call two different errors may take place, the one which
+appears in the list first will be thrown.
+
+Most of the errors are represented according to the same
+`(error tag, error argument)` pattern. See the list of errors below
+for details.
+
+We distinquish several error classes:
++ **Action exception**: given action cannot be performed with
+  regard to the current contract state.
+
+  Examples: "insufficient balance", "wallet does not exist".
+
+  If you are implementing a middleware, such errors should be propagated to
+  the client.
+
++ **Bad argument**: invalid argument supplied to the entrypoint.
+
+  Examples: entrypoint accepts a natural number from `0-3` range, and you
+  supply `5`.
+
+  If you are implementing a middleware, you should care about not letting
+  such errors happen.
+
++ **Internal**: contract-internal error.
+
+  In ideal case, such errors should not take place, but still, make sure
+  that you are ready to handle them. They can signal either invalid contract
+  deployment or a bug in contract implementation.
+
+  If an internal error is thrown, please report it to the author of this contract.
+
+
+<a name="errors-InternalError"></a>
+
+---
+
+### `InternalError`
+
+**Class:** Internal
+
+**Fires if:** Some internal error occured.
+
+**Representation:** Textual error message, see [`Text`](#types-Text).
+
+<a name="errors-InvalidSafelistAddr"></a>
+
+---
+
+### `InvalidSafelistAddr`
+
+**Class:** Bad argument
+
+**Fires if:** New safelist address doesn't have required entrypoint
+
+**Representation:** `("InvalidSafelistAddr", <error argument>)`.
+
+Provided error argument will be of type [`Text`](#types-Text).
+
+<a name="errors-NonTransferable"></a>
+
+---
+
+### `NonTransferable`
+
+**Class:** Bad argument
+
+**Fires if:** Transferable flag is false. Transfers are prohibited.
+
+**Representation:** `("NonTransferable", ())`.
+
+<a name="errors-NotEnoughAllowance"></a>
+
+---
+
+### `NotEnoughAllowance`
+
+**Class:** Action exception
+
+**Fires if:** Not enough funds allowance to perform the operation.
+
+**Representation:** `("NotEnoughAllowance", <error argument>)`.
+
+Provided error argument will be of type (***required*** : [`Natural`](#types-Natural), ***present*** : [`Natural`](#types-Natural)).
+
+<a name="errors-NotEnoughBalance"></a>
+
+---
+
+### `NotEnoughBalance`
+
+**Class:** Action exception
+
+**Fires if:** Not enough funds to perform the operation.
+
+**Representation:** `("NotEnoughBalance", <error argument>)`.
+
+Provided error argument will be of type (***required*** : [`Natural`](#types-Natural), ***present*** : [`Natural`](#types-Natural)).
+
+<a name="errors-NotInTransferAdminRightsMode"></a>
+
+---
+
+### `NotInTransferAdminRightsMode`
+
+**Class:** Action exception
+
+**Fires if:** Cannot accept admin rights before transfer process has been initiated by calling transferAdminRights entrypoint.
+
+**Representation:** `("NotInTransferAdminRightsMode", ())`.
+
+<a name="errors-SenderIsNotAdmin"></a>
+
+---
+
+### `SenderIsNotAdmin`
+
+**Class:** Action exception
+
+**Fires if:** Entrypoint executed not by its administrator.
+
+**Representation:** `("SenderIsNotAdmin", ())`.
+
+<a name="errors-SenderIsNotNewAdmin"></a>
+
+---
+
+### `SenderIsNotNewAdmin`
+
+**Class:** Bad argument
+
+**Fires if:** Cannot accept admin rights because the sender address is different from the address passed to the transferadminRights entrypoint previously.
+
+**Representation:** `("SenderIsNotNewAdmin", ())`.
+
+<a name="errors-SenderIsNotOwner"></a>
+
+---
+
+### `SenderIsNotOwner`
+
+**Class:** Action exception
+
+**Fires if:** Sender is not the contract owner.
+
+**Representation:** `("SenderIsNotOwner", ())`.
+
+<a name="errors-TokenOperationsArePaused"></a>
+
+---
+
+### `TokenOperationsArePaused`
+
+**Class:** Action exception
+
+**Fires if:** Token functionality (`transfer` and similar entrypoints) is suspended.
+
+**Representation:** `("TokenOperationsArePaused", ())`.
+
+<a name="errors-UnsafeAllowanceChange"></a>
+
+---
+
+### `UnsafeAllowanceChange`
+
+**Class:** Action exception
+
+**Fires if:** Allowance change from non-zero value to non-zero value is performed. This contract does not allow such an update, see the [corresponding attack vector](https://docs.google.com/document/d/1YLPtQxZu1UAvO9cZ1O2RPXBbT0mooh4DYKjA_jp-RLM) for explanation.
+
+**Representation:** `("UnsafeAllowanceChange", <error argument>)`.
+
+Provided error argument will be of type [`Natural`](#types-Natural) and stand for the previous value of approval.
