@@ -23,14 +23,14 @@ import Michelson.Typed (Notes(..), starNotes)
 import Michelson.Untyped (ann, noAnn)
 
 data StorageFields = StorageFields
-  { tokenMeta :: TokenMeta
-  , mbSafelistAddress :: Maybe Address
-  , owner :: Address
-  , admin :: Address
-  , mbNewAdmin :: Maybe Address
-  , paused :: Bool
-  , transferable :: Bool
-  , totalSupply :: Natural
+  { sfTokenMeta :: TokenMeta
+  , sfMbSafelistAddress :: Maybe Address
+  , sfOwner :: Address
+  , sfAdmin :: Address
+  , sfMbNewAdmin :: Maybe Address
+  , sfPaused :: Bool
+  , sfTransferable :: Bool
+  , sfTotalSupply :: Natural
   }
   deriving stock Generic
   deriving anyclass IsoValue
@@ -50,34 +50,34 @@ instance StoreHasField TokenMeta "tokenSymbol" MText where
   storeFieldOps = storeFieldOpsReferTo #tmSymbol storeFieldOpsADT
 
 instance StoreHasField StorageFields "tokenMeta" TokenMeta where
-  storeFieldOps = storeFieldOpsADT
+  storeFieldOps = storeFieldOpsReferTo #sfTokenMeta storeFieldOpsADT
 
 instance StoreHasField StorageFields "tokenName" MText where
-  storeFieldOps = storeFieldOpsDeeper #tokenMeta
+  storeFieldOps = storeFieldOpsDeeper #sfTokenMeta
 
 instance StoreHasField StorageFields "tokenSymbol" MText where
-  storeFieldOps = storeFieldOpsDeeper #tokenMeta
+  storeFieldOps = storeFieldOpsDeeper #sfTokenMeta
 
 instance StoreHasField StorageFields "mbSafelistAddress" (Maybe Address) where
-  storeFieldOps = storeFieldOpsADT
+  storeFieldOps = storeFieldOpsReferTo #sfMbSafelistAddress storeFieldOpsADT
 
 instance StoreHasField StorageFields "owner" Address where
-  storeFieldOps = storeFieldOpsADT
+  storeFieldOps = storeFieldOpsReferTo #sfOwner storeFieldOpsADT
 
 instance StoreHasField StorageFields "admin" Address where
-  storeFieldOps = storeFieldOpsADT
+  storeFieldOps = storeFieldOpsReferTo #sfAdmin storeFieldOpsADT
 
 instance StoreHasField StorageFields "mbNewAdmin" (Maybe Address) where
-  storeFieldOps = storeFieldOpsADT
+  storeFieldOps = storeFieldOpsReferTo #sfMbNewAdmin storeFieldOpsADT
 
 instance StoreHasField StorageFields "paused" Bool where
-  storeFieldOps = storeFieldOpsADT
+  storeFieldOps = storeFieldOpsReferTo #sfPaused storeFieldOpsADT
 
 instance StoreHasField StorageFields "transferable" Bool where
-  storeFieldOps = storeFieldOpsADT
+  storeFieldOps = storeFieldOpsReferTo #sfTransferable storeFieldOpsADT
 
 instance StoreHasField StorageFields "totalSupply" Natural where
-  storeFieldOps = storeFieldOpsADT
+  storeFieldOps = storeFieldOpsReferTo #sfTotalSupply storeFieldOpsADT
 
 instance Buildable TokenMeta where
   build TokenMeta{..} =
@@ -120,14 +120,14 @@ mkStorage owner admin mbSafelist meta =
   where
     fields :: StorageFields
     fields = StorageFields
-      { tokenMeta = meta
-      , mbSafelistAddress = mbSafelist
-      , owner = owner
-      , admin = admin
-      , mbNewAdmin = Nothing
-      , paused = False
-      , transferable = True
-      , totalSupply = 0
+      { sfTokenMeta = meta
+      , sfMbSafelistAddress = mbSafelist
+      , sfOwner = owner
+      , sfAdmin = admin
+      , sfMbNewAdmin = Nothing
+      , sfPaused = False
+      , sfTransferable = True
+      , sfTotalSupply = 0
       }
 
 data Parameter

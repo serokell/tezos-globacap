@@ -20,17 +20,17 @@ storage = storageVar
 
 ensureSenderIsOwner :: HasStorage Storage => IndigoProcedure
 ensureSenderIsOwner = do
-  let ownerAddr = storage !. #fields !. #owner
+  ownerAddr <- getStorageField @Storage #owner
   assertCustom_ #senderIsNotOwner $ ownerAddr ==. sender
 
 ensureSenderIsAdmin :: HasStorage Storage => IndigoProcedure
 ensureSenderIsAdmin = do
-  let admin = storage !. #fields !. #admin
+  admin <- getStorageField @Storage #admin
   assertCustom_ #senderIsNotAdmin $ admin ==. sender
 
 ensureIsTransferable :: HasStorage Storage => IndigoProcedure
 ensureIsTransferable = do
-  let transferable = storage !. #fields !. #transferable
+  transferable <- getStorageField @Storage #transferable
   assertCustom_ #nonTransferable transferable
 
 holdingsContract :: ContractCode Parameter Storage
@@ -88,7 +88,8 @@ holdingsIndigo param = contractName "Holdings" $ do
         setStorageField @Storage #mbNewAdmin $ some $ UnName #newAdmin newAdmin
     , #cAcceptAdminRights //-> \_unit -> do
         doc $ DDescription "Accept admin rights by the new admin."
-        ifJust (storage !. #fields !. #mbNewAdmin)
+        mbNewAdmin <- getStorageField @Storage #mbNewAdmin
+        ifJust mbNewAdmin
           (\newAdmin ->
               if newAdmin /=. sender
                 then () <$ failCustom_ #senderIsNotNewAdmin
@@ -100,7 +101,9 @@ holdingsIndigo param = contractName "Holdings" $ do
     , #cIsAdmin //-> \v -> do
         doc $ DDescription
           "Check whether address is admin. Returns `True` if the address is the admin."
-        project v $ \addr -> return $ (storage !. #fields !. #admin) ==. addr
+        project v $ \addr -> do
+          admin <- getStorageField @Storage #admin
+          return $ admin ==. addr
     , #cTransfer //-> \tParams -> do
         ensureSenderIsAdmin
         -- pause check is already done in Lorentz code
@@ -143,14 +146,17 @@ holdingsIndigo param = contractName "Holdings" $ do
         setStorageField @Storage #transferable $ UnName #value transferable
     , #cGetTokenMeta //-> \v -> do
         doc $ DDescription "Get token meta data: name, symbol and id."
-        project v $ \_ -> return (storage !. #fields !. #tokenMeta)
+        project v $ \_ -> do
+          tokenMeta <- getStorageField @Storage #tokenMeta
+          return tokenMeta
     )
 
 callAssertTransfer
   :: (HasStorage Storage, HasSideEffects, a :~> ("from" :! Address, "to" :! Address))
   => a -> IndigoProcedure
 callAssertTransfer a = do
-  whenJust (storage !. #fields !. #mbSafelistAddress)
+  mbSafelistAddress <- getStorageField @Storage #mbSafelistAddress
+  whenJust mbSafelistAddress
     (\addr -> do
         ifJust (contractCallingUnsafe @("from" :! Address, "to" :! Address)
                  (eprName $ Call @"assertTransfer") addr
@@ -163,7 +169,8 @@ callAssertReceiver
   :: (HasStorage Storage, HasSideEffects, a :~> Address)
   => a -> IndigoProcedure
 callAssertReceiver a = do
-  whenJust (storage !. #fields !. #mbSafelistAddress)
+  mbSafelistAddress <- getStorageField @Storage #mbSafelistAddress
+  whenJust mbSafelistAddress
     (\addr -> do
         ifJust (contractCallingUnsafe @Address
                  (eprName $ Call @"assertReceiver") addr
@@ -176,7 +183,8 @@ callAssertReceivers
   :: (HasStorage Storage, HasSideEffects, a :~> [Address])
   => a -> IndigoProcedure
 callAssertReceivers a = do
-  whenJust (storage !. #fields !. #mbSafelistAddress)
+  mbSafelistAddress <- getStorageField @Storage #mbSafelistAddress
+  whenJust mbSafelistAddress
     (\addr -> do
         ifJust (contractCallingUnsafe @[Address]
                  (eprName $ Call @"assertReceivers") addr
