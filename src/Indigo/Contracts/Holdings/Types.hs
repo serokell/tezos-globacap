@@ -92,6 +92,27 @@ dummyMeta = TokenMeta [mt|KekToken|] [mt|Kek|] [mt|Ququareq|]
 
 type Storage = ML.StorageSkeleton StorageFields
 
+instance TypeHasDoc StorageFields where
+  typeDocName _ = "Holdings storage fields"
+  typeDocMdDescription =
+    "Additional contract fields that define the current contract state. \
+    \It stores meta-information about token (see `TokenMeta` type), \
+    \information about the `owner` and the current `admin` of the contract. \
+    \Additionally it stores an optional address for currently used Safelist \
+    \contract, the `totalSupply` amount, and the `paused` and `transferable` flags."
+
+instance TypeHasDoc (ML.StorageSkeleton StorageFields) where
+  typeDocName _ = "Holdings storage"
+  typeDocMdDescription =
+    "Storage used in ManagedLedger-like contracts. \
+    \The main field of this skeletion is `ledger`. It is a `big_map` that \
+    \maps each registered address to its balance and approvals amounts. \
+    \Apart from `ledger` it stores `fields` that can vary for different contracts \
+    \and are fixed for this specific contract. See `StorageFields` type."
+  typeDocMdReference = poly1TypeDocMdReference
+  typeDocHaskellRep = homomorphicTypeDocHaskellRep @(ML.StorageSkeleton StorageFields)
+  typeDocMichelsonRep = homomorphicTypeDocMichelsonRep @(ML.StorageSkeleton StorageFields)
+
 storageNotes :: Notes (ToT Storage)
 storageNotes = NTPair noAnn (ann "ledger") noAnn
   (NTBigMap noAnn noAnn ledgerEntryNotes)

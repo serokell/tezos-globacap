@@ -44,6 +44,7 @@ holdingsIndigo
   => Var Parameter -> IndigoProcedure
 holdingsIndigo param = contractName "Holdings" $ do
   contractGeneral $ doc DGitRevisionUnknown
+  docStorage @Storage
   doc $ DDescription
     "This contract is used to distribute the token, it is optionally regulated by \
     \the Safelist contract."
@@ -60,8 +61,7 @@ holdingsIndigo param = contractName "Holdings" $ do
         setStorageField @Storage #tokenSymbol $ UnName #newSymbol newSymbol
     , #cSetSafelistAddress //-> \newMbSafelistAddrNamed -> do
         doc $ DDescription
-          "Change Safelist contract address. Note that address should explicitly \
-          \point to 'ensureSafelistConstraints' Safelist entrypoint."
+          "Change optional Safelist contract address."
         ensureSenderIsOwner
         let newMbSafelistAddr = UnName #newMbSafelistAddress newMbSafelistAddrNamed
         setStorageField @Storage #mbSafelistAddress newMbSafelistAddr
@@ -146,9 +146,7 @@ holdingsIndigo param = contractName "Holdings" $ do
         setStorageField @Storage #transferable $ UnName #value transferable
     , #cGetTokenMeta //-> \v -> do
         doc $ DDescription "Get token meta data: name, symbol and id."
-        project v $ \_ -> do
-          tokenMeta <- getStorageField @Storage #tokenMeta
-          return tokenMeta
+        project v $ \_ -> getStorageField @Storage #tokenMeta
     )
 
 callAssertTransfer
