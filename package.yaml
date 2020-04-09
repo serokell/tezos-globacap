@@ -55,6 +55,7 @@ tests:
       - test
 
     dependencies:
+      - containers
       - globacap
       - hspec
       - lorentz
@@ -72,6 +73,7 @@ tests:
       - nettest
 
     dependencies:
+      - containers
       - globacap
       - lorentz
       - morley

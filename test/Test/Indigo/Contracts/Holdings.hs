@@ -13,6 +13,7 @@ module Test.Indigo.Contracts.Holdings
   , test_documentation
   , unit_FA1'2_is_implemented
   , unit_nettest_scenario
+  , unit_whitelist_integration
   ) where
 
 import Test.Hspec (Expectation)
@@ -23,6 +24,7 @@ import Lorentz (Address, TAddress(..), ToAddress(..), mkView, mt)
 import qualified Lorentz.Contracts.ManagedLedger.Types as ML
 import qualified Lorentz.Contracts.Spec.ApprovableLedgerInterface as AL
 import Lorentz.Test
+import Michelson.Runtime (prepareContract)
 import Michelson.Runtime.GState (genesisAddress, genesisAddress1, genesisAddress2)
 import Morley.Nettest
 import Tezos.Core (toMutez)
@@ -31,6 +33,7 @@ import Util.Named ((.!))
 import Indigo.Contracts.Holdings
 
 import Nettest.Holdings
+import Nettest.WhitelistIntegration
 import Test.Indigo.Contracts.Common
 
 originateHoldings
@@ -415,3 +418,9 @@ test_documentation = runDocTests testLorentzDoc holdingsDoc
 unit_nettest_scenario :: Expectation
 unit_nettest_scenario =
   integrationalTestExpectation $ nettestToIntegrational nettestScenario
+
+unit_whitelist_integration :: Expectation
+unit_whitelist_integration = do
+  whitelistContract <- prepareContract $ Just "resources/whitelist.tz"
+  integrationalTestExpectation $
+    nettestToIntegrational (whitelistScenario whitelistContract)
