@@ -91,7 +91,7 @@ test_setSafelistAddress = testGroup "Test SetSafelistAddress entypoint"
         #newMbSafelistAddress .! (Just $ toAddress sl)
       validate . Right $ expectStorageUpdate h
         (\st ->
-           mbSafelistAddress (ML.fields st) == Just (toAddress sl)
+           sfMbSafelistAddress (ML.fields st) == Just (toAddress sl)
         ) "Unexpected new safelist address"
   , testCase "Call without owner rights" $
     integrationalTestExpectation $ do
