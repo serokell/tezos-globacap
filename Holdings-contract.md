@@ -1,10 +1,24 @@
 # Holdings
 
-**Code revision:** [206e7ea](https://github.com/serokell/tezos-globacap/blob/206e7ea53ffd0129742ea1ff5b4b13b9ab1fc964) *(Thu Apr 9 17:10:47 2020 +0300)*
+**Code revision:** [255d12a](https://github.com/serokell/tezos-globacap/blob/255d12a2de600262d8add83e469272709e29ae91) *(Thu Apr 9 17:18:41 2020 +0300)*
 
 
 
 This contract is used to distribute the token, it is optionally regulated by the Safelist contract.
+
+## Storage
+
+---
+
+### `Holdings storage`
+
+Storage used in ManagedLedger-like contracts. The main field of this skeletion is `ledger`. It is a `big_map` that maps each registered address to its balance and approvals amounts. Apart from `ledger` it stores `fields` that can vary for different contracts and are fixed for this specific contract. See `StorageFields` type.
+
+**Structure:** (***ledger*** :[`BigMap`](#types-BigMap) [`Address`](#types-Address-simplified) (***balance*** : [`Natural`](#types-Natural), ***approvals*** : [`Map`](#types-Map) [`Address`](#types-Address-simplified) [`Natural`](#types-Natural)), ***fields*** :[`StorageFields`](#types-Holdings-storage-fields))
+
+**Final Michelson representation:** `pair (big_map address (pair nat (map address nat))) (pair (pair (pair (pair string (pair string string)) (option address)) (pair address address)) (pair (pair (option address) bool) (pair bool nat)))`
+
+
 
 ## Entrypoints
 
@@ -70,7 +84,7 @@ Change token symbol.
 
 ### `setSafelistAddress`
 
-Change Safelist contract address. Note that address should explicitly point to 'ensureSafelistConstraints' Safelist entrypoint.
+Change optional Safelist contract address.
 
 **Argument:** 
   + **In Haskell:** ***newMbSafelistAddress*** : [`Maybe`](#types-Maybe) [`Address`](#types-Address-simplified)
@@ -553,6 +567,18 @@ This is similar to Michelson Address, but does not retain entrypoint name if it 
 
 
 
+<a name="types-BigMap"></a>
+
+---
+
+### `BigMap`
+
+BigMap primitive.
+
+**Final Michelson representation (example):** `BigMap Integer Natural` = `big_map int nat`
+
+
+
 <a name="types-Bool"></a>
 
 ---
@@ -577,6 +603,20 @@ Contract primitive with given type of parameter.
 
 
 
+<a name="types-Holdings-storage-fields"></a>
+
+---
+
+### `Holdings storage fields`
+
+Additional contract fields that define the current contract state. It stores meta-information about token (see `TokenMeta` type), information about the `owner` and the current `admin` of the contract. Additionally it stores an optional address for currently used Safelist contract, the `totalSupply` amount, and the `paused` and `transferable` flags.
+
+**Structure:** (***tokenMeta*** :[`TokenMeta`](#types-TokenMeta), ***mbSafelistAddress*** :[`Maybe`](#types-Maybe) [`Address`](#types-Address-simplified), ***owner*** :[`Address`](#types-Address-simplified), ***admin*** :[`Address`](#types-Address-simplified), ***mbNewAdmin*** :[`Maybe`](#types-Maybe) [`Address`](#types-Address-simplified), ***paused*** :[`Bool`](#types-Bool), ***transferable*** :[`Bool`](#types-Bool), ***totalSupply*** :[`Natural`](#types-Natural))
+
+**Final Michelson representation:** `pair (pair (pair (pair string (pair string string)) (option address)) (pair address address)) (pair (pair (option address) bool) (pair bool nat))`
+
+
+
 <a name="types-Integer"></a>
 
 ---
@@ -586,6 +626,18 @@ Contract primitive with given type of parameter.
 Signed number.
 
 **Final Michelson representation:** `int`
+
+
+
+<a name="types-Map"></a>
+
+---
+
+### `Map`
+
+Map primitive.
+
+**Final Michelson representation (example):** `Map Integer Natural` = `map int nat`
 
 
 
