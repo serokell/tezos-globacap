@@ -392,6 +392,16 @@ test_burnAndBurnAll = testGroup "Test Burn and BurnAll entrypoints"
       withSender ownerAddress $ lCallDef h (SetPause $ #value .! True)
       withSender ownerAddress $ lCallDef h $ BurnAll ()
       validate . Left $ lExpectCustomError_ #tokenOperationsArePaused
+  , testCase "BurnAll nullifies totalSupply" $
+    integrationalTestExpectation $ do
+      h <- originateHoldings ownerAddress $ Nothing
+      consumer <- lOriginateEmpty contractConsumer "consumer"
+      withSender ownerAddress $ lCallDef h $ Mint (#to .! ownerAddress, #value .! 100)
+      lCallDef h $ GetTotalSupply (mkView () consumer)
+      withSender ownerAddress $ lCallDef h $ BurnAll ()
+      lCallDef h $ GetTotalSupply (mkView () consumer)
+      validate . Right $
+        lExpectViewConsumerStorage consumer [100, 0]
   ]
 
 test_setPauseAndSetTransferable :: TestTree
