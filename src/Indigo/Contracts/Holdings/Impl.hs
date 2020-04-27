@@ -136,6 +136,7 @@ holdingsIndigo param = contractName "Holdings" $ do
         ensureSenderIsAdmin
         ensureNotPaused
         setField_ storage #ledger emptyBigMap
+        setStorageField @Storage #totalSupply (0 :: Natural)
     , #cSetPause //-> \pausedNamed -> do
         -- admin check is already done in Lorentz code
         let paused = UnName #value pausedNamed
