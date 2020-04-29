@@ -8,26 +8,28 @@ module Test.Indigo.Contracts.Holdings
   , test_mint
   , test_approve
   , test_transfer
+  , test_seize
   , test_burnAndBurnAll
   , test_setPauseAndSetTransferable
   , test_documentation
   , unit_FA1'2_is_implemented
   , unit_nettest_scenario
   , unit_whitelist_integration
+  , test_approvableLedger
   ) where
 
 import Test.Hspec (Expectation)
 import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.Hspec (testSpec)
 import Test.Tasty.HUnit (Assertion, testCase)
 
-import Lorentz (Address, TAddress(..), ToAddress(..), mkView, mt)
+import Lorentz (Address, ToAddress(..), mkView, mt)
 import qualified Lorentz.Contracts.ManagedLedger.Types as ML
 import qualified Lorentz.Contracts.Spec.ApprovableLedgerInterface as AL
+import Lorentz.Contracts.Test (approvableLedgerSpec)
 import Lorentz.Test
 import Michelson.Runtime (prepareContract)
-import Michelson.Runtime.GState (genesisAddress, genesisAddress1, genesisAddress2)
 import Morley.Nettest
-import Tezos.Core (toMutez)
 import Util.Named ((.!))
 
 import Indigo.Contracts.Holdings
@@ -35,12 +37,6 @@ import Indigo.Contracts.Holdings
 import Nettest.Holdings
 import Nettest.WhitelistIntegration
 import Test.Indigo.Contracts.Common
-
-originateHoldings
-  :: Address -> Maybe Address -> IntegrationalScenarioM (TAddress Parameter)
-originateHoldings owner mbSafelist =
-  lOriginate holdingsContract "holdings"
-  (mkStorage owner owner mbSafelist dummyMeta) (toMutez 0)
 
 ownerAddress :: Address
 ownerAddress = genesisAddress
@@ -269,11 +265,15 @@ test_transfer = testGroup "Test Transfer entrypoint"
   , testCase "Successful Transfer without admin rights" $
     integrationalTestExpectation $ do
       h <- originateHoldings ownerAddress $ Nothing
+      consumer <- lOriginateEmpty contractConsumer "consumer"
       withSender ownerAddress $ lCallDef h $ Mint (#to .! genesisAddress1, #value .! 100)
       withSender genesisAddress1 $
         lCallDef h $
         Transfer (#from .! genesisAddress1, #to .! ownerAddress, #value .! 70)
-      validate . Left $ lExpectCustomError_ #senderIsNotAdmin
+      lCallDef h $ GetBalance (mkView (#owner .! ownerAddress) consumer)
+      lCallDef h $ GetBalance (mkView (#owner .! genesisAddress1) consumer)
+      validate . Right $
+        lExpectViewConsumerStorage consumer [70, 30]
   , testCase "Transfer when safelist doesn't allow required pair fails" $
     integrationalTestExpectation $ do
       sl <- originateSafelist [] [ownerAddress]
@@ -284,7 +284,7 @@ test_transfer = testGroup "Test Transfer entrypoint"
         Transfer (#from .! ownerAddress, #to .! genesisAddress1, #value .! 70)
       validate . Left $
         lExpectCustomError_ #assertionFailure
-  , testCase "Transfer more tokens that have" $
+  , testCase "Transfer of more tokens than we have fails" $
     integrationalTestExpectation $ do
       h <- originateHoldings ownerAddress $ Nothing
       withSender ownerAddress $ lCallDef h $ Mint (#to .! ownerAddress, #value .! 100)
@@ -293,7 +293,7 @@ test_transfer = testGroup "Test Transfer entrypoint"
         Transfer (#from .! ownerAddress, #to .! genesisAddress1, #value .! 150)
       validate . Left $
         lExpectCustomError #notEnoughBalance (#required .! 150, #present .! 100)
-  , testCase "Succesful tranfer other tokens" $
+  , testCase "Successful transfer of other's tokens" $
     integrationalTestExpectation $ do
       h <- originateHoldings ownerAddress $ Nothing
       consumer <- lOriginateEmpty contractConsumer "consumer"
@@ -308,7 +308,7 @@ test_transfer = testGroup "Test Transfer entrypoint"
       lCallDef h $ GetBalance (mkView (#owner .! genesisAddress1) consumer)
       validate . Right $
         lExpectViewConsumerStorage consumer [70, 30]
-  , testCase "Transfer more tokens than approved" $
+  , testCase "Transfer of more tokens than approved fails" $
     integrationalTestExpectation $ do
       h <- originateHoldings ownerAddress $ Nothing
       withSender ownerAddress $ lCallDef h $
@@ -320,7 +320,7 @@ test_transfer = testGroup "Test Transfer entrypoint"
         Transfer (#from .! genesisAddress1, #to .! ownerAddress, #value .! 100)
       validate . Left $
         lExpectCustomError #notEnoughAllowance (#required .! 100, #present .! 70)
-  , testCase "Transfer when token is paused" $
+  , testCase "Transfer fails when token is paused" $
     integrationalTestExpectation $ do
       h <- originateHoldings ownerAddress $ Nothing
       withSender ownerAddress $ lCallDef h $ Mint (#to .! ownerAddress, #value .! 100)
@@ -329,7 +329,7 @@ test_transfer = testGroup "Test Transfer entrypoint"
         lCallDef h $
         Transfer (#from .! ownerAddress, #to .! genesisAddress1, #value .! 70)
       validate . Left $ lExpectCustomError_ #tokenOperationsArePaused
-  , testCase "Transfer when token is not transferable" $
+  , testCase "Transfer fails when token is not transferable" $
     integrationalTestExpectation $ do
       h <- originateHoldings ownerAddress $ Nothing
       withSender ownerAddress $ lCallDef h $ Mint (#to .! ownerAddress, #value .! 100)
@@ -337,6 +337,96 @@ test_transfer = testGroup "Test Transfer entrypoint"
       withSender ownerAddress $
         lCallDef h $
         Transfer (#from .! ownerAddress, #to .! genesisAddress1, #value .! 70)
+      validate . Left $ lExpectCustomError_ #nonTransferable
+  ]
+
+test_seize :: TestTree
+test_seize = testGroup "Test Seize entrypoint"
+ [ testCase "Successful Seize" $
+    integrationalTestExpectation $ do
+      sl <- originateSafelist [(ownerAddress, genesisAddress1)] [ownerAddress]
+      h <- originateHoldings ownerAddress $ Just $ toAddress sl
+      consumer <- lOriginateEmpty contractConsumer "consumer"
+      withSender ownerAddress $ lCallDef h $ Mint (#to .! ownerAddress, #value .! 100)
+      withSender ownerAddress $
+        lCallDef h $
+        Seize (#from .! ownerAddress, #to .! genesisAddress1, #value .! 70)
+      lCallDef h $ GetBalance (mkView (#owner .! ownerAddress) consumer)
+      lCallDef h $ GetBalance (mkView (#owner .! genesisAddress1) consumer)
+      validate . Right $
+        lExpectViewConsumerStorage consumer [30, 70]
+  , testCase "Successful Seize without safelist" $
+    integrationalTestExpectation $ do
+      h <- originateHoldings ownerAddress $ Nothing
+      consumer <- lOriginateEmpty contractConsumer "consumer"
+      withSender ownerAddress $ lCallDef h $ Mint (#to .! ownerAddress, #value .! 100)
+      withSender ownerAddress $
+        lCallDef h $
+        Seize (#from .! ownerAddress, #to .! genesisAddress1, #value .! 70)
+      lCallDef h $ GetBalance (mkView (#owner .! ownerAddress) consumer)
+      lCallDef h $ GetBalance (mkView (#owner .! genesisAddress1) consumer)
+      validate . Right $
+        lExpectViewConsumerStorage consumer [30, 70]
+  , testCase "Seize fails without admin rights" $
+    integrationalTestExpectation $ do
+      h <- originateHoldings ownerAddress $ Nothing
+      withSender ownerAddress $ lCallDef h $ Mint (#to .! genesisAddress1, #value .! 100)
+      withSender genesisAddress1 $
+        lCallDef h $
+        Seize (#from .! genesisAddress1, #to .! ownerAddress, #value .! 70)
+      validate . Left $ lExpectCustomError_ #senderIsNotAdmin
+  , testCase "Seize when safelist doesn't allow required pair fails" $
+    integrationalTestExpectation $ do
+      sl <- originateSafelist [] [ownerAddress]
+      h <- originateHoldings ownerAddress $ Just $ toAddress sl
+      withSender ownerAddress $ lCallDef h $ Mint (#to .! ownerAddress, #value .! 100)
+      withSender ownerAddress $
+        lCallDef h $
+        Seize (#from .! ownerAddress, #to .! genesisAddress1, #value .! 70)
+      validate . Left $
+        lExpectCustomError_ #assertionFailure
+  , testCase "Seize more tokens that have" $
+    integrationalTestExpectation $ do
+      h <- originateHoldings ownerAddress $ Nothing
+      withSender ownerAddress $ lCallDef h $ Mint (#to .! ownerAddress, #value .! 100)
+      withSender ownerAddress $
+        lCallDef h $
+        Seize (#from .! ownerAddress, #to .! genesisAddress1, #value .! 150)
+      validate . Left $
+        lExpectCustomError #notEnoughBalance (#required .! 150, #present .! 100)
+  , testCase "Seize doesn't consume allowance" $
+    integrationalTestExpectation $ do
+      h <- originateHoldings ownerAddress $ Nothing
+      consumer <- lOriginateEmpty contractConsumer "consumer"
+      withSender ownerAddress $ lCallDef h $
+        Mint (#to .! genesisAddress1, #value .! 100)
+      withSender genesisAddress1 $
+        lCallDef h $ Approve (#spender .! ownerAddress, #value .! 100)
+      withSender ownerAddress $
+        lCallDef h $
+        Seize (#from .! genesisAddress1, #to .! ownerAddress, #value .! 70)
+      lCallDef h $ GetAllowance (mkView (#owner .! genesisAddress1, #spender .! ownerAddress) consumer)
+      lCallDef h $ GetBalance (mkView (#owner .! ownerAddress) consumer)
+      lCallDef h $ GetBalance (mkView (#owner .! genesisAddress1) consumer)
+      validate . Right $
+        lExpectViewConsumerStorage consumer [100, 70, 30]
+  , testCase "Seize fails when token is paused" $
+    integrationalTestExpectation $ do
+      h <- originateHoldings ownerAddress $ Nothing
+      withSender ownerAddress $ lCallDef h $ Mint (#to .! ownerAddress, #value .! 100)
+      withSender ownerAddress $ lCallDef h (SetPause $ #value .! True)
+      withSender ownerAddress $
+        lCallDef h $
+        Seize (#from .! ownerAddress, #to .! genesisAddress1, #value .! 70)
+      validate . Left $ lExpectCustomError_ #tokenOperationsArePaused
+  , testCase "Seize fails when token is not transferable" $
+    integrationalTestExpectation $ do
+      h <- originateHoldings ownerAddress $ Nothing
+      withSender ownerAddress $ lCallDef h $ Mint (#to .! ownerAddress, #value .! 100)
+      withSender ownerAddress $ lCallDef h (SetTransferable $ #value .! False)
+      withSender ownerAddress $
+        lCallDef h $
+        Seize (#from .! ownerAddress, #to .! genesisAddress1, #value .! 70)
       validate . Left $ lExpectCustomError_ #nonTransferable
   ]
 
@@ -434,3 +524,8 @@ unit_whitelist_integration = do
   whitelistContract <- prepareContract $ Just "resources/whitelist.tz"
   integrationalTestExpectation $
     nettestToIntegrational (whitelistScenario whitelistContract)
+
+test_approvableLedger :: IO TestTree
+test_approvableLedger =
+  testSpec "Holdings contract without safelist ledger tests" $
+  approvableLedgerSpec originateHoldingsWithAlSettings

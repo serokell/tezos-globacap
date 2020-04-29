@@ -61,9 +61,11 @@ tests:
       - lorentz
       - morley
       - morley-ledgers
+      - morley-ledgers-test
       - morley-nettest
       - morley-prelude
       - tasty
+      - tasty-hspec
       - tasty-hunit-compat
 
   globacap-nettest:

@@ -78,6 +78,10 @@ Required `Holdings` entrypoints:
   * Description: returns `True` if the address is admin.
 * `transfer (address :from, address :to, nat :value)`
   * Description: transfer given amount of tokens from one address to another.
+  * Constraints: `isNotPaused`, `isTransferable`.
+  * Safelist constraints: `assertTransfer` passes.
+* `seize (address :from, address :to, nat :value)`
+  * Description: forcefully transfer funds from one address to another.
   * Constraints: `onlyAdmin`, `isNotPaused`, `isTransferable`.
   * Safelist constraints: `assertTransfer` passes.
 * `approve (address :spender, nat :value)`
