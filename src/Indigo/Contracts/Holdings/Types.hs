@@ -159,6 +159,7 @@ data Parameter
   | AcceptAdminRights ()
   | IsAdmin (View Address Bool)
   | Transfer ML.TransferParams
+  | Seize ML.TransferParams
   | Approve ML.ApproveParams
   | GetAllowance (View ML.GetAllowanceParams Natural)
   | GetBalance (View ML.GetBalanceParams Natural)
