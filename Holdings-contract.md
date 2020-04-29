@@ -1,6 +1,6 @@
 # Holdings
 
-**Code revision:** [e23affc](https://github.com/serokell/tezos-globacap/blob/e23affcebfe55e4696a993503780df7a8e12779c) *(Mon Apr 27 13:01:38 2020 +0300)*
+**Code revision:** [0b1f853](https://github.com/serokell/tezos-globacap/blob/0b1f853e3e48c767a4588cd8de3fc0124dad1029) *(Wed Apr 29 14:45:21 2020 +0300)*
 
 
 
@@ -216,8 +216,6 @@ In this case current number of tokens that sender is allowed to withdraw from th
 **Pausable:** Cannot be executed when token operations are paused.
 
 **Possible errors:**
-* [`SenderIsNotAdmin`](#errors-SenderIsNotAdmin) — Entrypoint executed not by its administrator.
-
 * [`NonTransferable`](#errors-NonTransferable) — Transferable flag is false.
 
 * [`InvalidSafelistAddr`](#errors-InvalidSafelistAddr) — New safelist address doesn't have required entrypoint
@@ -225,6 +223,41 @@ In this case current number of tokens that sender is allowed to withdraw from th
 * [`TokenOperationsArePaused`](#errors-TokenOperationsArePaused) — Token functionality (`transfer` and similar entrypoints) is suspended.
 
 * [`NotEnoughAllowance`](#errors-NotEnoughAllowance) — Not enough funds allowance to perform the operation.
+
+* [`NotEnoughBalance`](#errors-NotEnoughBalance) — Not enough funds to perform the operation.
+
+
+
+---
+
+### `seize`
+
+Forcibly send given amount of tokens from one address to another.
+
+**Argument:** 
+  + **In Haskell:** (***from*** : [`Address`](#types-Address-simplified), ***to*** : [`Address`](#types-Address-simplified), ***value*** : [`Natural`](#types-Natural))
+  + **In Michelson:** `(pair (address :from) (pair (address :to) (nat :value)))`
+
+<details>
+  <summary><b>How to call this entrypoint</b></summary>
+
+0. Construct an argument for the entrypoint.
+1. Call contract's `seize` entrypoint passing the constructed argument.
+</details>
+<p>
+
+
+
+**Pausable:** Cannot be executed when token operations are paused.
+
+**Possible errors:**
+* [`SenderIsNotAdmin`](#errors-SenderIsNotAdmin) — Entrypoint executed not by its administrator.
+
+* [`TokenOperationsArePaused`](#errors-TokenOperationsArePaused) — Token functionality (`transfer` and similar entrypoints) is suspended.
+
+* [`NonTransferable`](#errors-NonTransferable) — Transferable flag is false.
+
+* [`InvalidSafelistAddr`](#errors-InvalidSafelistAddr) — New safelist address doesn't have required entrypoint
 
 * [`NotEnoughBalance`](#errors-NotEnoughBalance) — Not enough funds to perform the operation.
 
