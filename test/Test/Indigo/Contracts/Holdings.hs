@@ -8,26 +8,28 @@ module Test.Indigo.Contracts.Holdings
   , test_mint
   , test_approve
   , test_transfer
+  , test_seize
   , test_burnAndBurnAll
   , test_setPauseAndSetTransferable
   , test_documentation
   , unit_FA1'2_is_implemented
   , unit_nettest_scenario
   , unit_whitelist_integration
+  , test_approvableLedger
   ) where
 
 import Test.Hspec (Expectation)
 import Test.Tasty (TestTree, testGroup)
+import Test.Tasty.Hspec (testSpec)
 import Test.Tasty.HUnit (Assertion, testCase)
 
-import Lorentz (Address, TAddress(..), ToAddress(..), mkView, mt)
+import Lorentz (Address, ToAddress(..), mkView, mt)
 import qualified Lorentz.Contracts.ManagedLedger.Types as ML
 import qualified Lorentz.Contracts.Spec.ApprovableLedgerInterface as AL
+import Lorentz.Contracts.Test (approvableLedgerSpec)
 import Lorentz.Test
 import Michelson.Runtime (prepareContract)
-import Michelson.Runtime.GState (genesisAddress, genesisAddress1, genesisAddress2)
 import Morley.Nettest
-import Tezos.Core (toMutez)
 import Util.Named ((.!))
 
 import Indigo.Contracts.Holdings
@@ -35,12 +37,6 @@ import Indigo.Contracts.Holdings
 import Nettest.Holdings
 import Nettest.WhitelistIntegration
 import Test.Indigo.Contracts.Common
-
-originateHoldings
-  :: Address -> Maybe Address -> IntegrationalScenarioM (TAddress Parameter)
-originateHoldings owner mbSafelist =
-  lOriginate holdingsContract "holdings"
-  (mkStorage owner owner mbSafelist dummyMeta) (toMutez 0)
 
 ownerAddress :: Address
 ownerAddress = genesisAddress
@@ -528,3 +524,8 @@ unit_whitelist_integration = do
   whitelistContract <- prepareContract $ Just "resources/whitelist.tz"
   integrationalTestExpectation $
     nettestToIntegrational (whitelistScenario whitelistContract)
+
+test_approvableLedger :: IO TestTree
+test_approvableLedger =
+  testSpec "Holdings contract without safelist ledger tests" $
+  approvableLedgerSpec originateHoldingsWithAlSettings

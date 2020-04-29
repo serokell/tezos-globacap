@@ -9,7 +9,6 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
 import Lorentz.Test
-import Michelson.Runtime.GState (genesisAddress, genesisAddress1, genesisAddress2)
 import Util.Named ((.!))
 
 import Indigo.Contracts.Safelist
