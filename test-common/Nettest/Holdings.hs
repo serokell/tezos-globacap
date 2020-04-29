@@ -24,7 +24,7 @@ nettestScenario = uncapsNettest $ do
   receiver :: Address <- newAddress "receiver"
   fakeSender :: Address <- newAddress "fakeSender"
   holdingsAddr :: Address <- originateSimple "Holdings"
-    (mkStorage ownerAddr ownerAddr Nothing dummyMeta) holdingsContract
+    (mkStorage ownerAddr ownerAddr Nothing mempty 0 dummyMeta) holdingsContract
   safelistAddr :: Address <- originateSimple "DummySafelist"
     (SL.mkStorage [(senderAddr, receiver)] [senderAddr, receiver, adminAddr])
     SL.safelistContract
@@ -46,7 +46,7 @@ nettestScenario = uncapsNettest $ do
   callFrom admin holdings (ep "acceptAdminRights") ()
   expectFailure (callFrom someGuy holdings (ep "transferAdminRights") someGuyAddr)
     NettestFailedWith
-  comment "Test token actions: mint, approve, transfer, burn"
+  comment "Test token actions: mint, approve, transfer, seize, burn"
   callFrom admin holdings (ep "mint")
     (#to .! senderAddr, #value .! (100500 :: Natural))
   comment "Now with safelist"
@@ -57,9 +57,16 @@ nettestScenario = uncapsNettest $ do
     )
     NettestFailedWith
   callFrom sender holdings (ep "approve")
-    (#spender .! adminAddr, #value .! (500 :: Natural))
-  callFrom admin holdings (ep "transfer")
+    (#spender .! adminAddr, #value .! (200 :: Natural))
+  expectFailure
+    (callFrom admin holdings (ep "transfer")
+      (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
+    )
+    NettestFailedWith
+  callFrom sender holdings (ep "transfer")
     (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
+  callFrom admin holdings (ep "seize")
+      (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
   expectFailure
     (callFrom someGuy holdings (ep "burn")
       (#from .! senderAddr, #value .! (100000 :: Natural))

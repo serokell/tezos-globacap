@@ -14,6 +14,7 @@ where
 
 import Indigo
 
+import qualified Data.Map as Map
 import Fmt (Buildable(..), (+|), (|+))
 
 import qualified Lorentz.Contracts.ManagedLedger.Types as ML
@@ -135,9 +136,11 @@ tokenMetaNotes = NTPair noAnn (ann "name") noAnn
 ledgerEntryNotes :: Notes (ToT ML.LedgerValue)
 ledgerEntryNotes = NTPair noAnn (ann "balance") (ann "approvals") starNotes starNotes
 
-mkStorage :: Address -> Address -> Maybe Address -> TokenMeta -> Storage
-mkStorage owner admin mbSafelist meta =
-  ML.mkStorageSkeleton mempty fields
+mkStorage
+  :: Address -> Address -> Maybe Address -> [(Address, Natural)] -> Natural
+  -> TokenMeta -> Storage
+mkStorage owner admin mbSafelist balances totalSupply meta =
+  ML.mkStorageSkeleton (Map.fromList balances) fields
   where
     fields :: StorageFields
     fields = StorageFields
@@ -148,7 +151,7 @@ mkStorage owner admin mbSafelist meta =
       , sfMbNewAdmin = Nothing
       , sfPaused = False
       , sfTransferable = True
-      , sfTotalSupply = 0
+      , sfTotalSupply = totalSupply
       }
 
 data Parameter
@@ -159,6 +162,7 @@ data Parameter
   | AcceptAdminRights ()
   | IsAdmin (View Address Bool)
   | Transfer ML.TransferParams
+  | Seize ML.TransferParams
   | Approve ML.ApproveParams
   | GetAllowance (View ML.GetAllowanceParams Natural)
   | GetBalance (View ML.GetBalanceParams Natural)

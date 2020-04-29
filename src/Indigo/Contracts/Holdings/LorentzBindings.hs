@@ -13,24 +13,39 @@ module Indigo.Contracts.Holdings.LorentzBindings
   , mint
   , setPause
   , transfer
+
+  -- Helpers used in seize entrypoint
+  , creditTo
+  , debitFrom
   ) where
 
 import Indigo
 import qualified Lorentz as L
 
 import Indigo.Backend (fromLorentzFun2)
-import Indigo.Frontend.Language (liftIndigoState)
-import Indigo.Internal.State (toSIS)
 
 import qualified Lorentz.Contracts.ManagedLedger.Impl as ML
 import qualified Lorentz.Contracts.Spec.ManagedLedgerInterface as ML
-
 
 import Indigo.Contracts.Holdings.Types
 
 ensureNotPaused :: HasStorage Storage => IndigoProcedure
 ensureNotPaused = liftIndigoState $ toSIS $
   unaryOpFlat (storageVar @Storage) (ML.ensureNotPaused # L.drop)
+
+debitFrom :: HasStorage Storage => Var ML.TransferParams -> IndigoProcedure
+debitFrom tp = do
+  newStorage <- liftIndigoState $ toSIS $
+    (fromLorentzFun2 $ L.framed $ ML.debitFrom # L.drop)
+    tp (storageVar @Storage)
+  setVar (storageVar @Storage) newStorage
+
+creditTo :: HasStorage Storage => Var ML.TransferParams -> IndigoProcedure
+creditTo tp = do
+  newStorage <- liftIndigoState $ toSIS $
+    (fromLorentzFun2 $ L.framed $ ML.creditTo # L.drop)
+    tp (storageVar @Storage)
+  setVar (storageVar @Storage) newStorage
 
 -- | Wrap lorentz entrypoint to produce Ingido code.
 -- Entrypoint produces new Storage and Ops, so the implicit Indigo variables

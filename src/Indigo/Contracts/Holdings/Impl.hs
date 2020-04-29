@@ -8,8 +8,6 @@ module Indigo.Contracts.Holdings.Impl
 
 import Indigo
 
-import Lorentz.EntryPoints (EntryPointRef(..), eprName)
-
 import Indigo.Contracts.Common.Error ()
 import Indigo.Contracts.Holdings.Error ()
 import Indigo.Contracts.Holdings.LorentzBindings
@@ -105,13 +103,23 @@ holdingsIndigo param = contractName "Holdings" $ do
           admin <- getStorageField @Storage #admin
           return $ admin ==. addr
     , #cTransfer //-> \tParams -> do
-        ensureSenderIsAdmin
         -- pause check is already done in Lorentz code
         ensureIsTransferable
         let from = tParams !. #from
             to = tParams !. #to
         callAssertTransfer $ pair (Name #from from) (Name #to to)
         transfer tParams
+    , #cSeize //-> \tParams -> do
+        doc $ DDescription
+          "Forcibly send given amount of tokens from one address to another."
+        ensureSenderIsAdmin
+        ensureNotPaused
+        ensureIsTransferable
+        let from = tParams !. #from
+            to = tParams !. #to
+        callAssertTransfer $ pair (Name #from from) (Name #to to)
+        debitFrom tParams
+        creditTo tParams
     , #cApprove //-> \aParams -> do
         -- pause check is already done in Lorentz code
         let spender = aParams !. #spender

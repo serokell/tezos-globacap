@@ -13,7 +13,6 @@ import Michelson.Typed.Convert (untypeValue)
 import Michelson.Typed.Haskell.Value (BigMap(..), IsoValue(..))
 import qualified Michelson.Untyped as U
 import Morley.Nettest
-import Morley.Nettest.Caps (originateUntypedSimple)
 import Util.Named
 
 import Indigo.Contracts.Holdings
@@ -60,7 +59,7 @@ whitelistScenario whitelistContract = uncapsNettest $ do
       ]
     ) whitelistContract
   holdingsAddr :: Address <- originateSimple "Holdings"
-    (mkStorage ownerAddr ownerAddr Nothing dummyMeta) holdingsContract
+    (mkStorage ownerAddr ownerAddr Nothing mempty 0 dummyMeta) holdingsContract
   let
     owner, sender, holdings :: AddrOrAlias
     owner = AddrResolved ownerAddr

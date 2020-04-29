@@ -71,7 +71,7 @@ holdingsStorageParser = do
     (#help .! "Initial token symbol.")
   tmId <- mTextOption (Just [mt|Token-id|]) (#name .! "token-id")
     (#help .! "Initial token id.")
-  pure $ H.mkStorage owner admin mbSafelist H.TokenMeta{..}
+  pure $ H.mkStorage owner admin mbSafelist mempty 0 H.TokenMeta{..}
   where
     mbAddressOption :: String -> String -> Opt.Parser (Maybe Address)
     mbAddressOption name hInfo = optional $

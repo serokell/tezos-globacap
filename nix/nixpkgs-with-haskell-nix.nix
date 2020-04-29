@@ -3,6 +3,6 @@
 
 let
   sources = import ./sources.nix;
-  haskellNixArgs = import sources."haskell.nix";
+  haskellNix = import sources."haskell.nix" {};
   nixpkgs = import sources.nixpkgs;
-in nixpkgs haskellNixArgs
+in nixpkgs haskellNix.nixpkgsArgs
