@@ -43,11 +43,12 @@ whitelistScenario :: U.Contract -> NettestScenario
 whitelistScenario whitelistContract = uncapsNettest $ do
   comment "Registering addresses"
   ownerAddr :: Address <- resolveNettestAddr
+  issuerAddr :: Address <- newAddress "issuer"
   senderAddr :: Address <- newAddress "sender"
   receiver :: Address <- newAddress "receiver"
   fakeSender :: Address <- newAddress "fakeSender"
   whitelist <- originateUntypedSimple "Whitelist"
-    ( untypeValue $ toVal $ mkWhitelistStorage ownerAddr
+    ( untypeValue $ toVal $ mkWhitelistStorage issuerAddr
       [ (ownerAddr, 0)
       , (senderAddr, 0)
       , (receiver, 1)
