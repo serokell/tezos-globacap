@@ -22,7 +22,7 @@ module Indigo.Contracts.Holdings.LorentzBindings
 import Indigo
 import qualified Lorentz as L
 
-import Indigo.Backend (fromLorentzFun2)
+import Indigo.Backend (fromLorentzFun2, updateVar)
 
 import qualified Lorentz.Contracts.ManagedLedger.Impl as ML
 import qualified Lorentz.Contracts.Spec.ManagedLedgerInterface as ML
@@ -30,7 +30,8 @@ import qualified Lorentz.Contracts.Spec.ManagedLedgerInterface as ML
 import Indigo.Contracts.Holdings.Types
 
 ensureNotPaused :: HasStorage Storage => IndigoProcedure
-ensureNotPaused = liftIndigoState $ toSIS $
+ensureNotPaused =
+  liftIndigoState $ toSIS $
   unaryOpFlat (storageVar @Storage) (ML.ensureNotPaused # L.drop)
 
 debitFrom :: HasStorage Storage => Var ML.TransferParams -> IndigoProcedure
@@ -38,14 +39,14 @@ debitFrom tp = do
   newStorage <- liftIndigoState $ toSIS $
     (fromLorentzFun2 $ L.framed $ ML.debitFrom # L.drop)
     tp (storageVar @Storage)
-  setVar (storageVar @Storage) newStorage
+  liftIndigoState $ toSIS $ updateVar (L.dip L.drop) (storageVar @Storage) newStorage
 
 creditTo :: HasStorage Storage => Var ML.TransferParams -> IndigoProcedure
 creditTo tp = do
   newStorage <- liftIndigoState $ toSIS $
     (fromLorentzFun2 $ L.framed $ ML.creditTo # L.drop)
     tp (storageVar @Storage)
-  setVar (storageVar @Storage) newStorage
+  liftIndigoState $ toSIS $ updateVar (L.dip L.drop) (storageVar @Storage) newStorage
 
 -- | Wrap lorentz entrypoint to produce Ingido code.
 -- Entrypoint produces new Storage and Ops, so the implicit Indigo variables
@@ -57,13 +58,10 @@ lorentzEntrypointToIndigo
 lorentzEntrypointToIndigo entrypointCode entrypointParam = do
   entrypointRes <- liftIndigoState $ toSIS $
     (fromLorentzFun2 $ L.framed entrypointCode) entrypointParam (storageVar @Storage)
-  let newStorage = snd entrypointRes
-      newOps = fst entrypointRes
   -- Propagate storage changes
-  setVar (storageVar @Storage) newStorage
+  liftIndigoState $ toSIS $ updateVar (L.dip L.drop) (storageVar @Storage) $ snd entrypointRes
   -- Add new chain operations
-  forEach newOps $ \op -> do
-    setVar operationsVar $ op .: operationsVar
+  liftIndigoState $ toSIS $ updateVar (L.iter L.cons) operationsVar $ fst entrypointRes
 
 transfer
   :: (a :~> ML.TransferParams, HasStorage Storage, HasSideEffects)

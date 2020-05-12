@@ -12,6 +12,7 @@ import Indigo.Contracts.Common.Error ()
 import Indigo.Contracts.Holdings.Error ()
 import Indigo.Contracts.Holdings.LorentzBindings
 import Indigo.Contracts.Holdings.Types
+import Lorentz.Run (Contract(..))
 
 storage :: HasStorage Storage => Var Storage
 storage = storageVar
@@ -31,11 +32,11 @@ ensureIsTransferable = do
   transferable <- getStorageField @Storage #transferable
   assertCustom_ #nonTransferable transferable
 
-holdingsContract :: ContractCode Parameter Storage
-holdingsContract = optimizeLorentz $ compileIndigoContract holdingsIndigo
+holdingsContract :: Contract Parameter Storage
+holdingsContract = defaultContract $ compileIndigoContract holdingsIndigo
 
 holdingsDoc :: ContractDoc
-holdingsDoc = buildLorentzDoc holdingsContract
+holdingsDoc = buildLorentzDoc $ cCode holdingsContract
 
 holdingsIndigo
   :: (HasStorage Storage, HasSideEffects)
@@ -63,18 +64,18 @@ holdingsIndigo param = contractName "Holdings" $ do
         ensureSenderIsOwner
         let newMbSafelistAddr = UnName #newMbSafelistAddress newMbSafelistAddrNamed
         setStorageField @Storage #mbSafelistAddress newMbSafelistAddr
-        whenJust newMbSafelistAddr
+        whenSome newMbSafelistAddr
           (\addr -> do
               -- Check that new safelist has required entrypoints
-              whenNothing
+              whenNone
                 (contractCallingUnsafe @("from" :! Address, "to" :! Address)
                  (eprName $ Call @"assertTransfer") addr
                 ) (() <$ failCustom #invalidSafelistAddr [mt|assertTransfer|])
-              whenNothing
+              whenNone
                 (contractCallingUnsafe @Address
                  (eprName $ Call @"assertReceiver") addr
                 ) (() <$ failCustom #invalidSafelistAddr [mt|assertReceiver|])
-              whenNothing
+              whenNone
                 (contractCallingUnsafe @[Address]
                  (eprName $ Call @"assertReceivers") addr
                 ) (() <$ failCustom #invalidSafelistAddr [mt|assertReceivers|])
@@ -87,7 +88,7 @@ holdingsIndigo param = contractName "Holdings" $ do
     , #cAcceptAdminRights //-> \_unit -> do
         doc $ DDescription "Accept admin rights by the new admin."
         mbNewAdmin <- getStorageField @Storage #mbNewAdmin
-        ifJust mbNewAdmin
+        ifSome mbNewAdmin
           (\newAdmin ->
               if newAdmin /=. sender
                 then () <$ failCustom_ #senderIsNotNewAdmin
@@ -143,8 +144,9 @@ holdingsIndigo param = contractName "Holdings" $ do
         doc $ DDescription "Destroy all tokens and allowances."
         ensureSenderIsAdmin
         ensureNotPaused
-        setField_ storage #ledger emptyBigMap
-        setStorageField @Storage #totalSupply (0 :: Natural)
+        setField storage #ledger emptyBigMap
+        setField storage #approvals emptyBigMap
+        setStorageField @Storage #totalSupply (0 nat)
     , #cSetPause //-> \pausedNamed -> do
         -- admin check is already done in Lorentz code
         let paused = UnName #value pausedNamed
@@ -163,12 +165,12 @@ callAssertTransfer
   => a -> IndigoProcedure
 callAssertTransfer a = do
   mbSafelistAddress <- getStorageField @Storage #mbSafelistAddress
-  whenJust mbSafelistAddress
+  whenSome mbSafelistAddress
     (\addr -> do
-        ifJust (contractCallingUnsafe @("from" :! Address, "to" :! Address)
+        ifSome (contractCallingUnsafe @("from" :! Address, "to" :! Address)
                  (eprName $ Call @"assertTransfer") addr
                )
-          (\cAddr -> transferTokens a (toMutez 0) cAddr)
+          (\cAddr -> transferTokens a (0 mutez) cAddr)
           (() <$ failCustom #invalidSafelistAddr [mt|assertTransfer|])
     )
 
@@ -177,12 +179,12 @@ callAssertReceiver
   => a -> IndigoProcedure
 callAssertReceiver a = do
   mbSafelistAddress <- getStorageField @Storage #mbSafelistAddress
-  whenJust mbSafelistAddress
+  whenSome mbSafelistAddress
     (\addr -> do
-        ifJust (contractCallingUnsafe @Address
+        ifSome (contractCallingUnsafe @Address
                  (eprName $ Call @"assertReceiver") addr
                )
-          (\cAddr -> transferTokens a (toMutez 0) cAddr)
+          (\cAddr -> transferTokens a (0 mutez) cAddr)
           (() <$ failCustom #invalidSafelistAddr [mt|assertReceiver|])
     )
 
@@ -191,11 +193,11 @@ callAssertReceivers
   => a -> IndigoProcedure
 callAssertReceivers a = do
   mbSafelistAddress <- getStorageField @Storage #mbSafelistAddress
-  whenJust mbSafelistAddress
+  whenSome mbSafelistAddress
     (\addr -> do
-        ifJust (contractCallingUnsafe @[Address]
+        ifSome (contractCallingUnsafe @[Address]
                  (eprName $ Call @"assertReceivers") addr
                )
-          (\cAddr -> transferTokens a (toMutez 0) cAddr)
+          (\cAddr -> transferTokens a (0 mutez) cAddr)
           (() <$ failCustom #invalidSafelistAddr [mt|assertReceivers|])
     )

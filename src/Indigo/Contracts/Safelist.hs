@@ -15,6 +15,7 @@ import Indigo
 import Data.Set (fromList)
 
 import Indigo.Contracts.Common.Error ()
+import Lorentz.Run (Contract)
 
 data Storage = Storage
   { sTransfers :: [(Address, Address)]
@@ -46,8 +47,8 @@ instance CustomErrorHasDoc "assertionFailure" where
   customErrDocMdCause =
     "Assertion failed."
 
-safelistContract :: ContractCode Parameter Storage
-safelistContract = compileIndigoContract safelistIndigo
+safelistContract :: Contract Parameter Storage
+safelistContract = defaultContract $ compileIndigoContract safelistIndigo
 
 safelistIndigo
   :: (HasStorage Storage)
