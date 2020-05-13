@@ -44,42 +44,6 @@ data TokenMeta = TokenMeta
   deriving stock (Eq, Generic)
   deriving anyclass (IsoValue, HasTypeAnn)
 
-instance StoreHasField TokenMeta "tokenName" MText where
-  storeFieldOps = storeFieldOpsReferTo #tmName storeFieldOpsADT
-
-instance StoreHasField TokenMeta "tokenSymbol" MText where
-  storeFieldOps = storeFieldOpsReferTo #tmSymbol storeFieldOpsADT
-
-instance StoreHasField StorageFields "tokenMeta" TokenMeta where
-  storeFieldOps = storeFieldOpsReferTo #sfTokenMeta storeFieldOpsADT
-
-instance StoreHasField StorageFields "tokenName" MText where
-  storeFieldOps = storeFieldOpsDeeper #sfTokenMeta
-
-instance StoreHasField StorageFields "tokenSymbol" MText where
-  storeFieldOps = storeFieldOpsDeeper #sfTokenMeta
-
-instance StoreHasField StorageFields "mbSafelistAddress" (Maybe Address) where
-  storeFieldOps = storeFieldOpsReferTo #sfMbSafelistAddress storeFieldOpsADT
-
-instance StoreHasField StorageFields "owner" Address where
-  storeFieldOps = storeFieldOpsReferTo #sfOwner storeFieldOpsADT
-
-instance StoreHasField StorageFields "admin" Address where
-  storeFieldOps = storeFieldOpsReferTo #sfAdmin storeFieldOpsADT
-
-instance StoreHasField StorageFields "mbNewAdmin" (Maybe Address) where
-  storeFieldOps = storeFieldOpsReferTo #sfMbNewAdmin storeFieldOpsADT
-
-instance StoreHasField StorageFields "paused" Bool where
-  storeFieldOps = storeFieldOpsReferTo #sfPaused storeFieldOpsADT
-
-instance StoreHasField StorageFields "transferable" Bool where
-  storeFieldOps = storeFieldOpsReferTo #sfTransferable storeFieldOpsADT
-
-instance StoreHasField StorageFields "totalSupply" Natural where
-  storeFieldOps = storeFieldOpsReferTo #sfTotalSupply storeFieldOpsADT
-
 instance HasField TokenMeta "tokenName" MText where
   fieldLens = fieldLensADT #tmName
 
@@ -135,6 +99,9 @@ instance HasField Storage "admin" Address where
   fieldLens = fieldLensDeeper #fields
 
 instance HasField Storage "mbNewAdmin" (Maybe Address) where
+  fieldLens = fieldLensDeeper #fields
+
+instance HasField Storage "paused" Bool where
   fieldLens = fieldLensDeeper #fields
 
 instance HasField Storage "transferable" Bool where

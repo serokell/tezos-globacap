@@ -8,9 +8,12 @@ module Indigo.Contracts.Holdings.Impl
 
 import Indigo
 
+import Indigo.Contracts.ManagedLedger
+  (approve, burn, creditTo, debitFrom, ensureNotPaused, getAllowance, getBalance,
+  getTotalSupply, mint, setPause, transfer)
+
 import Indigo.Contracts.Common.Error ()
 import Indigo.Contracts.Holdings.Error ()
-import Indigo.Contracts.Holdings.LorentzBindings
 import Indigo.Contracts.Holdings.Types
 import Lorentz.Run (Contract(..))
 
@@ -51,12 +54,12 @@ holdingsIndigo param = contractName "Holdings" $ do
     ( #cSetName //-> \newName -> do
         doc $ DDescription "Change token name."
         ensureSenderIsAdmin
-        ensureNotPaused
+        ensureNotPaused @Storage
         setStorageField @Storage #tokenName $ UnName #newName newName
     , #cSetSymbol //-> \newSymbol -> do
         doc $ DDescription "Change token symbol."
         ensureSenderIsAdmin
-        ensureNotPaused
+        ensureNotPaused @Storage
         setStorageField @Storage #tokenSymbol $ UnName #newSymbol newSymbol
     , #cSetSafelistAddress //-> \newMbSafelistAddrNamed -> do
         doc $ DDescription
@@ -83,7 +86,7 @@ holdingsIndigo param = contractName "Holdings" $ do
     , #cTransferAdminRights //-> \newAdmin -> do
         doc $ DDescription "Transfer admin rights to the new address."
         ensureSenderIsOwner
-        ensureNotPaused
+        ensureNotPaused @Storage
         setStorageField @Storage #mbNewAdmin $ some $ UnName #newAdmin newAdmin
     , #cAcceptAdminRights //-> \_unit -> do
         doc $ DDescription "Accept admin rights by the new admin."
@@ -109,48 +112,49 @@ holdingsIndigo param = contractName "Holdings" $ do
         let from = tParams !. #from
             to = tParams !. #to
         callAssertTransfer $ pair (Name #from from) (Name #to to)
-        transfer tParams
+        transfer @Storage tParams
     , #cSeize //-> \tParams -> do
         doc $ DDescription
           "Forcibly send given amount of tokens from one address to another."
         ensureSenderIsAdmin
-        ensureNotPaused
+        ensureNotPaused @Storage
         ensureIsTransferable
         let from = tParams !. #from
             to = tParams !. #to
+            value = tParams !. #value
         callAssertTransfer $ pair (Name #from from) (Name #to to)
-        debitFrom tParams
-        creditTo tParams
+        debitFrom @Storage from value
+        creditTo @Storage to value
     , #cApprove //-> \aParams -> do
         -- pause check is already done in Lorentz code
         let spender = aParams !. #spender
             receivers = spender .: sender .: nil
         callAssertReceivers receivers
-        approve aParams
-    , #cGetAllowance //-> getAllowance
-    , #cGetBalance //-> getBalance
-    , #cGetTotalSupply //-> getTotalSupply
+        approve @Storage aParams
+    , #cGetAllowance //-> getAllowance @Storage
+    , #cGetBalance //-> getBalance @Storage
+    , #cGetTotalSupply //-> getTotalSupply @Storage
     , #cMint //-> \mParams -> do
-        ensureNotPaused
+        ensureNotPaused @Storage
         -- admin check is already done in Lorentz code
         let to = mParams !. #to
         callAssertReceiver to
-        mint mParams
+        mint @Storage mParams
     , #cBurn //-> \bParams -> do
-        ensureNotPaused
+        ensureNotPaused @Storage
         -- admin check is already done in Lorentz code
-        burn bParams
+        burn @Storage bParams
     , #cBurnAll //-> \_ -> do
         doc $ DDescription "Destroy all tokens and allowances."
         ensureSenderIsAdmin
-        ensureNotPaused
+        ensureNotPaused @Storage
         setField storage #ledger emptyBigMap
         setField storage #approvals emptyBigMap
         setStorageField @Storage #totalSupply (0 nat)
     , #cSetPause //-> \pausedNamed -> do
         -- admin check is already done in Lorentz code
         let paused = UnName #value pausedNamed
-        setPause paused
+        setPause @Storage paused
     , #cSetTransferable //-> \transferable -> do
         doc $ DDescription "Change transferable flag."
         ensureSenderIsAdmin
