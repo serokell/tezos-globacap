@@ -44,41 +44,71 @@ data TokenMeta = TokenMeta
   deriving stock (Eq, Generic)
   deriving anyclass (IsoValue, HasTypeAnn)
 
-instance StoreHasField TokenMeta "tokenName" MText where
-  storeFieldOps = storeFieldOpsReferTo #tmName storeFieldOpsADT
+instance HasField TokenMeta "tokenName" MText where
+  fieldLens = fieldLensADT #tmName
 
-instance StoreHasField TokenMeta "tokenSymbol" MText where
-  storeFieldOps = storeFieldOpsReferTo #tmSymbol storeFieldOpsADT
+instance HasField TokenMeta "tokenSymbol" MText where
+  fieldLens = fieldLensADT #tmSymbol
 
-instance StoreHasField StorageFields "tokenMeta" TokenMeta where
-  storeFieldOps = storeFieldOpsReferTo #sfTokenMeta storeFieldOpsADT
+instance HasField StorageFields "tokenName" MText where
+  fieldLens = fieldLensDeeper #sfTokenMeta
 
-instance StoreHasField StorageFields "tokenName" MText where
-  storeFieldOps = storeFieldOpsDeeper #sfTokenMeta
+instance HasField StorageFields "tokenSymbol" MText where
+  fieldLens = fieldLensDeeper #sfTokenMeta
 
-instance StoreHasField StorageFields "tokenSymbol" MText where
-  storeFieldOps = storeFieldOpsDeeper #sfTokenMeta
+instance HasField StorageFields "tokenMeta" TokenMeta where
+  fieldLens = fieldLensADT #sfTokenMeta
 
-instance StoreHasField StorageFields "mbSafelistAddress" (Maybe Address) where
-  storeFieldOps = storeFieldOpsReferTo #sfMbSafelistAddress storeFieldOpsADT
+instance HasField StorageFields "mbSafelistAddress" (Maybe Address) where
+  fieldLens = fieldLensADT #sfMbSafelistAddress
 
-instance StoreHasField StorageFields "owner" Address where
-  storeFieldOps = storeFieldOpsReferTo #sfOwner storeFieldOpsADT
+instance HasField StorageFields "owner" Address where
+  fieldLens = fieldLensADT #sfOwner
 
-instance StoreHasField StorageFields "admin" Address where
-  storeFieldOps = storeFieldOpsReferTo #sfAdmin storeFieldOpsADT
+instance HasField StorageFields "admin" Address where
+  fieldLens = fieldLensADT #sfAdmin
 
-instance StoreHasField StorageFields "mbNewAdmin" (Maybe Address) where
-  storeFieldOps = storeFieldOpsReferTo #sfMbNewAdmin storeFieldOpsADT
+instance HasField StorageFields "mbNewAdmin" (Maybe Address) where
+  fieldLens = fieldLensADT #sfMbNewAdmin
 
-instance StoreHasField StorageFields "paused" Bool where
-  storeFieldOps = storeFieldOpsReferTo #sfPaused storeFieldOpsADT
+instance HasField StorageFields "paused" Bool where
+  fieldLens = fieldLensADT #sfPaused
 
-instance StoreHasField StorageFields "transferable" Bool where
-  storeFieldOps = storeFieldOpsReferTo #sfTransferable storeFieldOpsADT
+instance HasField StorageFields "transferable" Bool where
+  fieldLens = fieldLensADT #sfTransferable
 
-instance StoreHasField StorageFields "totalSupply" Natural where
-  storeFieldOps = storeFieldOpsReferTo #sfTotalSupply storeFieldOpsADT
+instance HasField StorageFields "totalSupply" Natural where
+  fieldLens = fieldLensADT #sfTotalSupply
+
+instance HasField Storage "tokenName" MText where
+  fieldLens = fieldLensDeeper #fields
+
+instance HasField Storage "tokenSymbol" MText where
+  fieldLens = fieldLensDeeper #fields
+
+instance HasField Storage "tokenMeta" TokenMeta where
+  fieldLens = fieldLensDeeper #fields
+
+instance HasField Storage "mbSafelistAddress" (Maybe Address) where
+  fieldLens = fieldLensDeeper #fields
+
+instance HasField Storage "owner" Address where
+  fieldLens = fieldLensDeeper #fields
+
+instance HasField Storage "admin" Address where
+  fieldLens = fieldLensDeeper #fields
+
+instance HasField Storage "mbNewAdmin" (Maybe Address) where
+  fieldLens = fieldLensDeeper #fields
+
+instance HasField Storage "paused" Bool where
+  fieldLens = fieldLensDeeper #fields
+
+instance HasField Storage "transferable" Bool where
+  fieldLens = fieldLensDeeper #fields
+
+instance HasField Storage "totalSupply" Natural where
+  fieldLens = fieldLensDeeper #fields
 
 instance Buildable TokenMeta where
   build TokenMeta{..} =
@@ -102,39 +132,22 @@ instance TypeHasDoc StorageFields where
     \Additionally it stores an optional address for currently used Safelist \
     \contract, the `totalSupply` amount, and the `paused` and `transferable` flags."
 
-instance TypeHasDoc (ML.StorageSkeleton StorageFields) where
-  typeDocName _ = "Holdings storage"
-  typeDocMdDescription =
-    "Storage used in ManagedLedger-like contracts. \
-    \The main field of this skeletion is `ledger`. It is a `big_map` that \
-    \maps each registered address to its balance and approvals amounts. \
-    \Apart from `ledger` it stores `fields` that can vary for different contracts \
-    \and are fixed for this specific contract. See `StorageFields` type."
-  typeDocMdReference = poly1TypeDocMdReference
-  typeDocHaskellRep = homomorphicTypeDocHaskellRep @(ML.StorageSkeleton StorageFields)
-  typeDocMichelsonRep = homomorphicTypeDocMichelsonRep @(ML.StorageSkeleton StorageFields)
-
 storageNotes :: Notes (ToT Storage)
-storageNotes = NTPair noAnn (ann "ledger") noAnn
-  (NTBigMap noAnn noAnn ledgerEntryNotes)
-  (NTPair noAnn noAnn noAnn
-    (NTPair noAnn noAnn noAnn
-      (NTPair noAnn (ann "tokenMeta") (ann "mbSafelistAddress") tokenMetaNotes starNotes)
-      (NTPair noAnn (ann "owner") (ann "admin") starNotes starNotes)
-    )
-    (NTPair noAnn noAnn noAnn
-      (NTPair noAnn (ann "mbNewAdmin") (ann "paused") starNotes starNotes)
-      (NTPair noAnn (ann "transferable") (ann "totalSupply") starNotes starNotes)
-    )
-  )
+storageNotes =  ML.storageSkeletonNotes @StorageFields $
+  NTPair noAnn noAnn noAnn
+   (NTPair noAnn noAnn noAnn
+     (NTPair noAnn (ann "tokenMeta") (ann "mbSafelistAddress") tokenMetaNotes starNotes)
+     (NTPair noAnn (ann "owner") (ann "admin") starNotes starNotes)
+   )
+   (NTPair noAnn noAnn noAnn
+     (NTPair noAnn (ann "mbNewAdmin") (ann "paused") starNotes starNotes)
+     (NTPair noAnn (ann "transferable") (ann "totalSupply") starNotes starNotes)
+   )
 
 tokenMetaNotes :: Notes (ToT TokenMeta)
 tokenMetaNotes = NTPair noAnn (ann "name") noAnn
   starNotes
   (NTPair noAnn (ann "symbol") (ann "id") starNotes starNotes)
-
-ledgerEntryNotes :: Notes (ToT ML.LedgerValue)
-ledgerEntryNotes = NTPair noAnn (ann "balance") (ann "approvals") starNotes starNotes
 
 mkStorage
   :: Address -> Address -> Maybe Address -> [(Address, Natural)] -> Natural
