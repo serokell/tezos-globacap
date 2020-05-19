@@ -1,6 +1,6 @@
 # Holdings
 
-**Code revision:** [3cac0b6](https://github.com/serokell/tezos-globacap/blob/3cac0b6c5632f6d0011e05f55364a9ab43af47ff) *(Mon May 11 17:54:05 2020 +0300)*
+**Code revision:** [452ea1c](https://github.com/serokell/tezos-globacap/blob/452ea1c05fcfd8855c5c96d4913aa827b9bf36f3) *(Tue May 19 17:43:35 2020 +0300)*
 
 
 
@@ -10,13 +10,16 @@ This contract is used to distribute the token, it is optionally regulated by the
 
 ---
 
-### `Holdings storage`
+### `StorageSkeleton`
 
-Storage used in ManagedLedger-like contracts. The main field of this skeletion is `ledger`. It is a `big_map` that maps each registered address to its balance and approvals amounts. Apart from `ledger` it stores `fields` that can vary for different contracts and are fixed for this specific contract. See `StorageFields` type.
+Managed ledger storage skeleton.
 
-**Structure:** (***ledger*** :[`BigMap`](#types-BigMap) [`Address`](#types-Address-simplified) (***balance*** : [`Natural`](#types-Natural), ***approvals*** : [`Map`](#types-Map) [`Address`](#types-Address-simplified) [`Natural`](#types-Natural)), ***fields*** :[`StorageFields`](#types-Holdings-storage-fields))
+**Structure (example):** `StorageSkeleton StorageFields` = 
+  * ***ledger*** :[`BigMap`](#types-BigMap) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen) (***balance*** : [`Natural`](#types-Natural))
+  * ***approvals*** :[`BigMap`](#types-BigMap) (***owner*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***spender*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)) [`Natural`](#types-Natural)
+  * ***fields*** :[`StorageFields`](#types-StorageFields)
 
-**Final Michelson representation:** `pair (big_map address (pair nat (map address nat))) (pair (pair (pair (pair string (pair string string)) (option address)) (pair address address)) (pair (pair (option address) bool) (pair bool nat)))`
+**Final Michelson representation (example):** `StorageSkeleton StorageFields` = `pair (big_map address nat) (pair (big_map (pair address address) nat) (pair address (pair bool nat)))`
 
 
 
@@ -87,7 +90,7 @@ Change token symbol.
 Change optional Safelist contract address.
 
 **Argument:** 
-  + **In Haskell:** ***newMbSafelistAddress*** : [`Maybe`](#types-Maybe) [`Address`](#types-Address-simplified)
+  + **In Haskell:** ***newMbSafelistAddress*** : [`Maybe`](#types-Maybe) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
   + **In Michelson:** `(option :newMbSafelistAddress address)`
 
 <details>
@@ -114,7 +117,7 @@ Change optional Safelist contract address.
 Transfer admin rights to the new address.
 
 **Argument:** 
-  + **In Haskell:** ***newAdmin*** : [`Address`](#types-Address-simplified)
+  + **In Haskell:** ***newAdmin*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
   + **In Michelson:** `(address :newAdmin)`
 
 <details>
@@ -170,7 +173,7 @@ Accept admin rights by the new admin.
 Check whether address is admin. Returns `True` if the address is the admin.
 
 **Argument:** 
-  + **In Haskell:** [`View`](#types-View) [`Address`](#types-Address-simplified) [`Bool`](#types-Bool)
+  + **In Haskell:** [`View`](#types-View) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen) [`Bool`](#types-Bool)
   + **In Michelson:** `(pair address (contract bool))`
 
 <details>
@@ -200,7 +203,7 @@ In this case current number of tokens that sender is allowed to withdraw from th
 
 
 **Argument:** 
-  + **In Haskell:** (***from*** : [`Address`](#types-Address-simplified), ***to*** : [`Address`](#types-Address-simplified), ***value*** : [`Natural`](#types-Natural))
+  + **In Haskell:** (***from*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***to*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :from) (pair (address :to) (nat :value)))`
 
 <details>
@@ -235,7 +238,7 @@ In this case current number of tokens that sender is allowed to withdraw from th
 Forcibly send given amount of tokens from one address to another.
 
 **Argument:** 
-  + **In Haskell:** (***from*** : [`Address`](#types-Address-simplified), ***to*** : [`Address`](#types-Address-simplified), ***value*** : [`Natural`](#types-Natural))
+  + **In Haskell:** (***from*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***to*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :from) (pair (address :to) (nat :value)))`
 
 <details>
@@ -270,17 +273,30 @@ Forcibly send given amount of tokens from one address to another.
 When called with `(address :spender, nat :value)`
 parameters allows `spender` account to withdraw from the sender, multiple times,
 up to the `value` amount.
-Each call of `transfer` entrypoint decreases the allowance amount on the transferred amount of tokens unless `transfer` is called with `from` account equal to sender.
+Each call of `transfer` entrypoint decreases the allowance amount on the transferred amount of
+tokens, unless `transfer` is called with `from` account equal to sender, in which case allowance
+is always ignored.
+In other terms self-approval, where 'from` is equal to sender, is redundant and will never be consumed by a 'transfer'.
 
-If this entrypoint is called again, it overwrites the current allowance
-with `value`.
+If this entrypoint is called again, it overwrites the current allowance with `value`.
 
-Changing allowance value from non-zero value to a non-zero value is
-forbidden to prevent the [corresponding attack vector](https://docs.google.com/document/d/1YLPtQxZu1UAvO9cZ1O2RPXBbT0mooh4DYKjA_jp-RLM).
+**DISCLAIMER**: this suffers from an [attack vector](https://docs.google.com/document/d/1YLPtQxZu1UAvO9cZ1O2RPXBbT0mooh4DYKjA_jp-RLM),
+that is a known issue of `ERC20` and, as a consequence, of `FA1.2` (which is
+based on it).
+It is not safe to change the approval from a non-zero value to a non-zero value.
+This is the reason why performing such a change directly is not allowed by the contract.
+However this is not enough on its own, a token holder that intends to
+safely change the allowance for `X` to `K` token must:
+1. read the current allowance `M` for `X` from the latest transaction `S`.
+2. send a transaction `T` that sets the allowance to `0`.
+3. wait for the blockchain to confirm that `T` is included.
+4. scan all transactions between `S` and `T`.
+5. calculate the allowance `N <= M` spent by `X` in those transactions.
+6. set the allowance to `K - N` iff `N < K`.
 
 
 **Argument:** 
-  + **In Haskell:** (***spender*** : [`Address`](#types-Address-simplified), ***value*** : [`Natural`](#types-Natural))
+  + **In Haskell:** (***spender*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :spender) (nat :value))`
 
 <details>
@@ -311,7 +327,7 @@ forbidden to prevent the [corresponding attack vector](https://docs.google.com/d
 Returns the approval value between two given addresses.
 
 **Argument:** 
-  + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address`](#types-Address-simplified), ***spender*** : [`Address`](#types-Address-simplified)) [`Natural`](#types-Natural)
+  + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***spender*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)) [`Natural`](#types-Natural)
   + **In Michelson:** `(pair (pair (address :owner) (address :spender)) (contract nat))`
 
 <details>
@@ -333,7 +349,7 @@ Returns the approval value between two given addresses.
 Returns the balance of the address in the ledger.
 
 **Argument:** 
-  + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address`](#types-Address-simplified)) [`Natural`](#types-Natural)
+  + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)) [`Natural`](#types-Natural)
   + **In Michelson:** `(pair (address :owner) (contract nat))`
 
 <details>
@@ -377,7 +393,7 @@ Returns total number of tokens.
 Produces tokens on the account associated with the given address.
 
 **Argument:** 
-  + **In Haskell:** (***to*** : [`Address`](#types-Address-simplified), ***value*** : [`Natural`](#types-Natural))
+  + **In Haskell:** (***to*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :to) (nat :value))`
 
 <details>
@@ -410,7 +426,7 @@ Produces tokens on the account associated with the given address.
 Destroys the given amount of tokens on the account associated with the given address.
 
 **Argument:** 
-  + **In Haskell:** (***from*** : [`Address`](#types-Address-simplified), ***value*** : [`Natural`](#types-Natural))
+  + **In Haskell:** (***from*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :from) (nat :value))`
 
 <details>
@@ -588,11 +604,11 @@ Tuple of size 3.
 
 
 
-<a name="types-Address-simplified"></a>
+<a name="types-Address-lparenno-entrypointrparen"></a>
 
 ---
 
-### `Address simplified`
+### `Address (no entrypoint)`
 
 This is similar to Michelson Address, but does not retain entrypoint name if it refers to a contract.
 
@@ -644,7 +660,15 @@ Contract primitive with given type of parameter.
 
 Additional contract fields that define the current contract state. It stores meta-information about token (see `TokenMeta` type), information about the `owner` and the current `admin` of the contract. Additionally it stores an optional address for currently used Safelist contract, the `totalSupply` amount, and the `paused` and `transferable` flags.
 
-**Structure:** (***tokenMeta*** :[`TokenMeta`](#types-TokenMeta), ***mbSafelistAddress*** :[`Maybe`](#types-Maybe) [`Address`](#types-Address-simplified), ***owner*** :[`Address`](#types-Address-simplified), ***admin*** :[`Address`](#types-Address-simplified), ***mbNewAdmin*** :[`Maybe`](#types-Maybe) [`Address`](#types-Address-simplified), ***paused*** :[`Bool`](#types-Bool), ***transferable*** :[`Bool`](#types-Bool), ***totalSupply*** :[`Natural`](#types-Natural))
+**Structure:** 
+  * ***tokenMeta*** :[`TokenMeta`](#types-TokenMeta)
+  * ***mbSafelistAddress*** :[`Maybe`](#types-Maybe) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
+  * ***owner*** :[`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
+  * ***admin*** :[`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
+  * ***mbNewAdmin*** :[`Maybe`](#types-Maybe) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
+  * ***paused*** :[`Bool`](#types-Bool)
+  * ***transferable*** :[`Bool`](#types-Bool)
+  * ***totalSupply*** :[`Natural`](#types-Natural)
 
 **Final Michelson representation:** `pair (pair (pair (pair string (pair string string)) (option address)) (pair address address)) (pair (pair (option address) bool) (pair bool nat))`
 
@@ -659,18 +683,6 @@ Additional contract fields that define the current contract state. It stores met
 Signed number.
 
 **Final Michelson representation:** `int`
-
-
-
-<a name="types-Map"></a>
-
----
-
-### `Map`
-
-Map primitive.
-
-**Final Michelson representation (example):** `Map Integer Natural` = `map int nat`
 
 
 
@@ -734,7 +746,10 @@ This has to contain only ASCII characters with codes from [32; 126] range; addit
 
 Meta information about token.
 
-**Structure:** (***name*** :[`Text`](#types-Text), ***symbol*** :[`Text`](#types-Text), ***id*** :[`Text`](#types-Text))
+**Structure:** 
+  * ***name*** :[`Text`](#types-Text)
+  * ***symbol*** :[`Text`](#types-Text)
+  * ***id*** :[`Text`](#types-Text)
 
 **Final Michelson representation:** `pair string (pair string string)`
 
@@ -749,7 +764,9 @@ Meta information about token.
 `View a r` accepts an argument of type `a` and callback contract which accepts `r` and returns result via calling that contract.
 Read more in [A1 conventions document](https://gitlab.com/tzip/tzip/-/blob/c42e3f0f5e73669e84e615d69bee73281572eb0a/proposals/tzip-4/tzip-4.md#view-entrypoints).
 
-**Structure (example):** `View () Integer` = ([`()`](#types-lparenrparen), [`ContractRef`](#types-Contract) [`Integer`](#types-Integer))
+**Structure (example):** `View () Integer` = 
+[`()`](#types-lparenrparen)
+[`ContractRef`](#types-Contract) [`Integer`](#types-Integer)
 
 **Final Michelson representation (example):** `View () Integer` = `pair unit (contract int)`
 
