@@ -17,7 +17,7 @@ nettestScenario
   => NettestImpl m -> m ()
 nettestScenario = uncapsNettest $ do
   comment "Registering addresses"
-  ownerAddr :: Address <- resolveNettestAddr
+  ownerAddr :: Address <- resolveNettestAddress
   adminAddr :: Address <- newAddress "admin"
   someGuyAddr :: Address <- newAddress "someGuy"
   senderAddr :: Address <- newAddress "sender"
@@ -29,14 +29,14 @@ nettestScenario = uncapsNettest $ do
     (SL.mkStorage [(senderAddr, receiver)] [senderAddr, receiver, adminAddr])
     SL.safelistContract
   let
-    owner, admin, someGuy, sender :: AddrOrAlias
-    owner = AddrResolved ownerAddr
-    admin = AddrResolved adminAddr
-    someGuy = AddrResolved someGuyAddr
-    sender = AddrResolved senderAddr
+    owner, admin, someGuy, sender :: AddressOrAlias
+    owner = AddressResolved ownerAddr
+    admin = AddressResolved adminAddr
+    someGuy = AddressResolved someGuyAddr
+    sender = AddressResolved senderAddr
 
-    holdings :: AddrOrAlias
-    holdings = AddrResolved holdingsAddr
+    holdings :: AddressOrAlias
+    holdings = AddressResolved holdingsAddr
 
   comment "Holdings nettest scenario"
   comment "Test admin rights rotation"

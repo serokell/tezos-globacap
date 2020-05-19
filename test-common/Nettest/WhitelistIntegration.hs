@@ -42,7 +42,7 @@ mkWhitelistStorage issuer users whitelists =
 whitelistScenario :: U.Contract -> NettestScenario
 whitelistScenario whitelistContract = uncapsNettest $ do
   comment "Registering addresses"
-  ownerAddr :: Address <- resolveNettestAddr
+  ownerAddr :: Address <- resolveNettestAddress
   issuerAddr :: Address <- newAddress "issuer"
   senderAddr :: Address <- newAddress "sender"
   receiver :: Address <- newAddress "receiver"
@@ -62,10 +62,10 @@ whitelistScenario whitelistContract = uncapsNettest $ do
   holdingsAddr :: Address <- originateSimple "Holdings"
     (mkStorage ownerAddr ownerAddr Nothing mempty 0 dummyMeta) holdingsContract
   let
-    owner, sender, holdings :: AddrOrAlias
-    owner = AddrResolved ownerAddr
-    sender = AddrResolved senderAddr
-    holdings = AddrResolved holdingsAddr
+    owner, sender, holdings :: AddressOrAlias
+    owner = AddressResolved ownerAddr
+    sender = AddressResolved senderAddr
+    holdings = AddressResolved holdingsAddr
 
   comment "Scenario with Whitelist"
   comment "Set whitelist as a safelist contract"
