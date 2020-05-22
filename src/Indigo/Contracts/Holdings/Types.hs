@@ -17,11 +17,12 @@ import Indigo
 import qualified Data.Map as Map
 import Fmt (Buildable(..), (+|), (|+))
 
-import qualified Lorentz.Contracts.ManagedLedger.Types as ML
+import qualified Lorentz.Contracts.ManagedLedger.Types as ML hiding (Storage)
 import qualified Lorentz.Contracts.Spec.ManagedLedgerInterface as ML
 import Lorentz.TypeAnns (HasTypeAnn)
 import Michelson.Typed (Notes(..), starNotes)
 import Michelson.Untyped (ann, noAnn)
+import Util.Named
 
 data StorageFields = StorageFields
   { sfTokenMeta :: TokenMeta
@@ -81,34 +82,40 @@ instance HasField StorageFields "totalSupply" Natural where
   fieldLens = fieldLensADT #sfTotalSupply
 
 instance HasField Storage "tokenName" MText where
-  fieldLens = fieldLensDeeper #fields
+  fieldLens = fieldLensDeeper #sFields
 
 instance HasField Storage "tokenSymbol" MText where
-  fieldLens = fieldLensDeeper #fields
+  fieldLens = fieldLensDeeper #sFields
 
 instance HasField Storage "tokenMeta" TokenMeta where
-  fieldLens = fieldLensDeeper #fields
+  fieldLens = fieldLensDeeper #sFields
 
 instance HasField Storage "mbSafelistAddress" (Maybe Address) where
-  fieldLens = fieldLensDeeper #fields
+  fieldLens = fieldLensDeeper #sFields
 
 instance HasField Storage "owner" Address where
-  fieldLens = fieldLensDeeper #fields
+  fieldLens = fieldLensDeeper #sFields
 
 instance HasField Storage "admin" Address where
-  fieldLens = fieldLensDeeper #fields
+  fieldLens = fieldLensDeeper #sFields
 
 instance HasField Storage "mbNewAdmin" (Maybe Address) where
-  fieldLens = fieldLensDeeper #fields
+  fieldLens = fieldLensDeeper #sFields
 
 instance HasField Storage "paused" Bool where
-  fieldLens = fieldLensDeeper #fields
+  fieldLens = fieldLensDeeper #sFields
 
 instance HasField Storage "transferable" Bool where
-  fieldLens = fieldLensDeeper #fields
+  fieldLens = fieldLensDeeper #sFields
 
 instance HasField Storage "totalSupply" Natural where
-  fieldLens = fieldLensDeeper #fields
+  fieldLens = fieldLensDeeper #sFields
+
+instance HasField Storage "ledger" (BigMap Address ML.LedgerValue) where
+  fieldLens = fieldLensADT #sLedger
+
+instance HasField Storage "approvals" (BigMap ML.GetAllowanceParams Natural) where
+  fieldLens = fieldLensADT #sApprovals
 
 instance Buildable TokenMeta where
   build TokenMeta{..} =
@@ -121,7 +128,21 @@ instance TypeHasDoc TokenMeta where
 dummyMeta :: TokenMeta
 dummyMeta = TokenMeta [mt|KekToken|] [mt|Kek|] [mt|Ququareq|]
 
-type Storage = ML.StorageSkeleton StorageFields
+data Storage = Storage
+  { sLedger    :: BigMap Address ML.LedgerValue
+  , sApprovals :: BigMap ML.GetAllowanceParams Natural
+  , sFields    :: StorageFields
+  } deriving stock Generic
+    deriving anyclass IsoValue
+
+instance TypeHasDoc Storage where
+  typeDocName _ = "Holdings storage"
+  typeDocMdDescription =
+    "Root datatype for Holdings contract storage type. It contains two `big_map`s: \n\
+    \* `ledger` - stores addresses balances.\n\
+    \* `approvals` - stores approvals amounts.\n\n\
+    \Apart from that it has `fields` which store various additional information \
+    \about contract state. See `Holdings storage fields` type."
 
 instance TypeHasDoc StorageFields where
   typeDocName _ = "Holdings storage fields"
@@ -152,8 +173,11 @@ tokenMetaNotes = NTPair noAnn (ann "name") noAnn
 mkStorage
   :: Address -> Address -> Maybe Address -> [(Address, Natural)] -> Natural
   -> TokenMeta -> Storage
-mkStorage owner admin mbSafelist balances totalSupply meta =
-  ML.mkStorageSkeleton (Map.fromList balances) fields
+mkStorage owner admin mbSafelist balances totalSupply meta = Storage
+  { sLedger = BigMap $ (#balance .!) <$> (Map.fromList balances)
+  , sApprovals = mempty
+  , sFields = fields
+  }
   where
     fields :: StorageFields
     fields = StorageFields
