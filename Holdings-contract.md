@@ -1,6 +1,6 @@
 # Holdings
 
-**Code revision:** [fa23e45](https://github.com/serokell/tezos-globacap/blob/fa23e45c2def7824d9be2939ebd46e48a8a3dd84) *(Mon May 25 17:23:50 2020 +0300)*
+**Code revision:** [5f0caba](https://github.com/serokell/tezos-globacap/blob/5f0cababf74f5c4947c69c7109b41b0f93bf6c50) *(Mon May 25 17:38:05 2020 +0300)*
 
 
 
