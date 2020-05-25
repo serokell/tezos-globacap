@@ -13,12 +13,9 @@ module Test.Indigo.Contracts.Holdings
   , test_setPauseAndSetTransferable
   , test_documentation
   , unit_FA1'2_is_implemented
-  , unit_nettest_scenario
-  , unit_whitelist_integration
   , test_approvableLedger
   ) where
 
-import Test.Hspec (Expectation)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hspec (testSpec)
 import Test.Tasty.HUnit (Assertion, testCase)
@@ -28,14 +25,10 @@ import qualified Lorentz.Contracts.ManagedLedger.Types as ML
 import qualified Lorentz.Contracts.Spec.ApprovableLedgerInterface as AL
 import Lorentz.Contracts.Test (approvableLedgerSpec)
 import Lorentz.Test
-import Michelson.Runtime (prepareContract)
-import Morley.Nettest
 import Util.Named ((.!))
 
 import Indigo.Contracts.Holdings
 
-import Nettest.Holdings
-import Nettest.WhitelistIntegration
 import Test.Indigo.Contracts.Common
 
 ownerAddress :: Address
@@ -514,16 +507,6 @@ unit_FA1'2_is_implemented =
 
 test_documentation :: [TestTree]
 test_documentation = runDocTests testLorentzDoc holdingsDoc
-
-unit_nettest_scenario :: Expectation
-unit_nettest_scenario =
-  integrationalTestExpectation $ nettestToIntegrational nettestScenario
-
-unit_whitelist_integration :: Expectation
-unit_whitelist_integration = do
-  whitelistContract <- prepareContract $ Just "resources/whitelist.tz"
-  integrationalTestExpectation $
-    nettestToIntegrational (whitelistScenario whitelistContract)
 
 test_approvableLedger :: IO TestTree
 test_approvableLedger =
