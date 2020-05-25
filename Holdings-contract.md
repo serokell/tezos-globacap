@@ -1,6 +1,6 @@
 # Holdings
 
-**Code revision:** [452ea1c](https://github.com/serokell/tezos-globacap/blob/452ea1c05fcfd8855c5c96d4913aa827b9bf36f3) *(Tue May 19 17:43:35 2020 +0300)*
+**Code revision:** [fa23e45](https://github.com/serokell/tezos-globacap/blob/fa23e45c2def7824d9be2939ebd46e48a8a3dd84) *(Mon May 25 17:23:50 2020 +0300)*
 
 
 
@@ -10,16 +10,20 @@ This contract is used to distribute the token, it is optionally regulated by the
 
 ---
 
-### `StorageSkeleton`
+### `Holdings storage`
 
-Managed ledger storage skeleton.
+Root datatype for Holdings contract storage type. It contains two `big_map`s: 
+* `ledger` - stores addresses balances.
+* `approvals` - stores approvals amounts.
 
-**Structure (example):** `StorageSkeleton StorageFields` = 
+Apart from that it has `fields` which store various additional information about contract state. See `Holdings storage fields` type.
+
+**Structure:** 
   * ***ledger*** :[`BigMap`](#types-BigMap) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen) (***balance*** : [`Natural`](#types-Natural))
   * ***approvals*** :[`BigMap`](#types-BigMap) (***owner*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***spender*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)) [`Natural`](#types-Natural)
-  * ***fields*** :[`StorageFields`](#types-StorageFields)
+  * ***fields*** :[`Holdings storage fields`](#types-Holdings-storage-fields)
 
-**Final Michelson representation (example):** `StorageSkeleton StorageFields` = `pair (big_map address nat) (pair (big_map (pair address address) nat) (pair address (pair bool nat)))`
+**Final Michelson representation:** `pair (big_map address nat) (pair (big_map (pair address address) nat) (pair (pair (pair (pair string (pair string string)) (option address)) (pair address address)) (pair (pair (option address) bool) (pair bool nat))))`
 
 
 
