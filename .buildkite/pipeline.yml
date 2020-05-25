@@ -1,37 +1,41 @@
 # SPDX-FileCopyrightText: 2020 TBD
 # SPDX-License-Identifier: LicenseRef-Proprietary
 
+env:
+  TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER: "Y"
+
 steps:
   - label: hlint
-    branches: "!autodoc/master"
+    if: &not_scheduled_not_autodoc
+      build.source != "schedule" && build.branch != "autodoc/master"
     commands:
     - nix run -f ci.nix pkgs.hlint -c
         ./scripts/lint.sh
 
   - label: reuse lint
-    branches: "!autodoc/master"
+    if: *not_scheduled_not_autodoc
     commands:
     - nix run -f ci.nix pkgs.reuse -c
         reuse lint
 
   - label: check trailing whitespace
-    branches: "!autodoc/master"
+    if: *not_scheduled_not_autodoc
     commands:
     - .buildkite/check-trailing-whitespace.sh
 
   - label: xrefcheck
-    branches: "!autodoc/master"
+    if: *not_scheduled_not_autodoc
     commands:
     - nix run -f ci.nix xrefcheck -c xrefcheck
     soft_fail: true  # TODO: remove
 
   - label: build
-    branches: "!autodoc/master"
+    if: *not_scheduled_not_autodoc
     commands:
     - nix-build ci.nix -A all-components
 
   - label: bats
-    branches: "!autodoc/master"
+    if: *not_scheduled_not_autodoc
     commands:
     - mkdir -p tmp
     - nix-build ci.nix -A packages.globacap.exes.globacap -o tmp/result-globacap
@@ -40,13 +44,33 @@ steps:
         bats ./scripts/test.bats
 
   - label: test
-    branches: "!autodoc/master"
+    if: *not_scheduled_not_autodoc
     commands:
     - nix-build ci.nix -A packages.globacap.tests.globacap-test
     - ./result/bin/globacap-test
 
+  - label: nettest-local-chain
+    if: *not_scheduled_not_autodoc
+    env:
+      NETTEST_NODE_ADDR: "localhost"
+      NETTEST_NODE_PORT: "8734"
+      MONEYBAG: "unencrypted:edsk3AvAoPS5jFov49aWBQ9oVtCPwNSne2CriHvkFxfeCg4Srr5bak"
+    commands: &run-nettest
+    - nix-build ci.nix -A packages.globacap.tests.globacap-nettest
+    - nix run -f ci.nix tezos-client -c ./scripts/ci/run-local-chain-nettest.sh result/bin/globacap-nettest
+
+  - label: nettest-local-chain-scheduled
+    if: build.source == "schedule"
+    env:
+      NETTEST_NODE_ADDR: "carthage.testnet.tezos.serokell.team"
+      NETTEST_NODE_PORT: "8732"
+      # Note that testnet moneybag can run out of tz. If this happened, someone should transfer it some
+      # more tz, its address: tz1VwWdetdADCEMySCumYXWtvf9pZQV3CmE5
+      MONEYBAG: "unencrypted:edsk4boUjEukc4THSkxiS32KrLEgQDcZmWg3YMhhdTfBF7fxKJAhdq"
+    commands: *run-nettest
+
   - label: contract doc development
-    branches: "!autodoc/master !master"
+    if: build.source != "schedule" && build.branch != "autodoc/master" && build.branch != "master"
     commands:
       - nix-build ci.nix -A contracts-doc --arg release false
       - ln -s ./result/Holdings-contract.md Holdings-contract.md
@@ -54,7 +78,8 @@ steps:
       - Holdings-contract.md
 
   - label: contract doc release
-    branches: master
+    if: &not_scheduled_master
+      build.source != "schedule" && build.branch == "master"
     commands:
     - nix-build ci.nix -A contracts-doc --arg release true
         --argstr commitSha "$(git rev-parse HEAD)"
@@ -64,7 +89,7 @@ steps:
       - Holdings-contract.md
 
   - label: xrefcheck generated doc
-    branches: "!autodoc/master"
+    if: *not_scheduled_not_autodoc
     commands:
     - mkdir tmp
     - if [ "$BUILDKITE_BRANCH" = "master" ];
@@ -78,7 +103,7 @@ steps:
     soft_fail: true
 
   - label: weeder
-    branches: "!autodoc/master"
+    if: *not_scheduled_not_autodoc
     commands:
     - nix-build ci.nix -A weeder-script
       # weeder needs .cabal file:
@@ -86,9 +111,13 @@ steps:
     - ./result
 
   - label: autodoc upload
-    branches: master
+    if: *not_scheduled_master
     commands:
     - mkdir tmp
     - buildkite-agent artifact download Holdings-contract.md tmp/
         --step "contract doc release"
     - ./scripts/ci/upload-autodoc.sh
+
+notify:
+  - email: "tezos-alerts@serokell.io"
+    if: build.state == "failed" && build.source == "schedule"
