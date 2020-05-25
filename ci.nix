@@ -6,6 +6,7 @@ rec {
   pkgs = import ./nix/nixpkgs-with-haskell-nix.nix;
   xrefcheck = import sources.xrefcheck;
   weeder-hacks = import sources.haskell-nix-weeder { inherit pkgs; };
+  tezos-client = (import "${sources.tezos-packaging}/pkgs.nix" {}).ocamlPackages.tezos-client;
 
   haskell-nix = pkgs.haskell-nix;
 

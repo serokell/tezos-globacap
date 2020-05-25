@@ -22,9 +22,14 @@ main = do
       (#header .! "globacap testing scenario")
       (#parser .! clientParser)
   env <- mkMorleyClientEnv parsedConfig
+  whitelistContract <- prepareContract $ Just "resources/whitelist.tz"
+
+  putTextLn "Running pure holdings nettest scenario"
+  runNettestViaIntegrational nettestScenario
+  putTextLn "Running pure whitelist integration nettest scenario"
+  runNettestViaIntegrational (whitelistScenario whitelistContract)
 
   putTextLn "Running holdings nettest scenario"
   runNettestClient env nettestScenario
-  whitelistContract <- prepareContract $ Just "resources/whitelist.tz"
   putTextLn "Running whitelist integration nettest scenario"
   runNettestClient env (whitelistScenario whitelistContract)

@@ -51,18 +51,14 @@ tests:
   globacap-test:
     <<: *test-common
     source-dirs:
-      - test-common
       - test
 
     dependencies:
-      - containers
       - globacap
-      - hspec
       - lorentz
       - morley
       - morley-ledgers
       - morley-ledgers-test
-      - morley-nettest
       - morley-prelude
       - tasty
       - tasty-hspec
@@ -71,7 +67,6 @@ tests:
   globacap-nettest:
     <<: *test-common
     source-dirs:
-      - test-common
       - nettest
 
     dependencies:

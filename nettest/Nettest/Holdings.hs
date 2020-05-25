@@ -6,8 +6,10 @@ module Nettest.Holdings
   ) where
 
 import Lorentz.Address
+import Michelson.Untyped.EntryPoints
 import Morley.Nettest
 import Util.Named
+import Tezos.Core (toMutez)
 
 import Indigo.Contracts.Holdings
 import qualified Indigo.Contracts.Safelist as SL
@@ -37,6 +39,17 @@ nettestScenario = uncapsNettest $ do
 
     holdings :: AddressOrAlias
     holdings = AddressResolved holdingsAddr
+    -- We transfer additional mutez to admin so that he doesn't run out of it.
+    -- Probably can be removed after https://gitlab.com/morley-framework/morley/-/issues/139
+    -- is resolved. Currently we spend 10 times more fee than needed.
+    td = TransferData
+      { tdFrom = owner
+      , tdTo = admin
+      , tdAmount = toMutez 1500000
+      , tdEntrypoint = DefEpName
+      , tdParameter = ()
+      }
+  transfer td
 
   comment "Holdings nettest scenario"
   comment "Test admin rights rotation"
