@@ -1,7 +1,7 @@
 <!--
- - SPDX-FileCopyrightText: 2020 TBD
+ - SPDX-FileCopyrightText: 2020 Globacap
  -
- - SPDX-License-Identifier: LicenseRef-Proprietary
+ - SPDX-License-Identifier: MPL-2.0
  -->
 
 # Tezos Globacap
@@ -47,4 +47,4 @@ Please see [CONTRIBUTING.md](.github/CONTRIBUTING.md) for more information.
 
 ## License
 
-© 2020 TBD, all rights reserved.
+© 2020 Globacap, all rights reserved.

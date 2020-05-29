@@ -1,6 +1,2 @@
 # SPDX-FileCopyrightText: 2020 Globacap
 # SPDX-License-Identifier: MPL-2.0
-.stack-work
-
-# hpack
-**/*.cabal

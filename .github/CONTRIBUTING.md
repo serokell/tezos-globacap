@@ -37,9 +37,9 @@ but, basically, it all boils down to the following:
     file – it is not as hard as it might sound):
 
     ```haskell
-    {- SPDX-FileCopyrightText: 2020 TBD
+    {- SPDX-FileCopyrightText: 2020 Globacap
      -
-     - SPDX-License-Identifier: LicenseRef-Proprietary
+     - SPDX-License-Identifier: MPL-2.0
      -}
     ```
 

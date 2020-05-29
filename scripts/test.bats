@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
-# SPDX-FileCopyrightText: 2020 TBD
-# SPDX-License-Identifier: LicenseRef-Proprietary
+# SPDX-FileCopyrightText: 2020 Globacap
+# SPDX-License-Identifier: MPL-2.0
 
 setup () {
   bin_dir="tmp"
