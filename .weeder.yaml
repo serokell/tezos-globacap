@@ -1,5 +1,5 @@
-# SPDX-FileCopyrightText: 2020 TBD
-# SPDX-License-Identifier: LicenseRef-Proprietary
+# SPDX-FileCopyrightText: 2020 Globacap
+# SPDX-License-Identifier: MPL-2.0
 - package:
   - name: globacap
   - section:

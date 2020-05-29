@@ -1,6 +1,6 @@
-# SPDX-FileCopyrightText: 2020 TBD
+# SPDX-FileCopyrightText: 2020 Globacap
 #
-# SPDX-License-Identifier: LicenseRef-Proprietary
+# SPDX-License-Identifier: MPL-2.0
 with import (builtins.fetchGit {
   url = "https://github.com/NixOS/nixpkgs-channels";
   ref = "nixos-unstable";

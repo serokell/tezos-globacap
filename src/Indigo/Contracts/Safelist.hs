@@ -1,6 +1,6 @@
--- SPDX-FileCopyrightText: 2020 TBD
+-- SPDX-FileCopyrightText: 2020 Globacap
 --
--- SPDX-License-Identifier: LicenseRef-Proprietary
+-- SPDX-License-Identifier: MPL-2.0
 {-# OPTIONS_GHC -Wno-orphans #-}
 -- | Dummy implementation for Safelist contract that complies with the specification
 module Indigo.Contracts.Safelist

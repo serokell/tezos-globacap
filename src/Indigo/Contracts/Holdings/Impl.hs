@@ -1,6 +1,6 @@
--- SPDX-FileCopyrightText: 2020 TBD
+-- SPDX-FileCopyrightText: 2020 Globacap
 --
--- SPDX-License-Identifier: LicenseRef-Proprietary
+-- SPDX-License-Identifier: MPL-2.0
 module Indigo.Contracts.Holdings.Impl
   ( holdingsContract
   , holdingsDoc
