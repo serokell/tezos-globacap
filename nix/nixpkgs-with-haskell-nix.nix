@@ -3,6 +3,8 @@
 
 let
   sources = import ./sources.nix;
-  haskellNix = import sources."haskell.nix" {};
+  haskellNix = import sources."haskell.nix" {
+    sourceOverrides = { hackage = sources."hackage.nix"; stackage = sources."stackage.nix"; };
+  };
   nixpkgs = import sources.nixpkgs;
 in nixpkgs haskellNix.nixpkgsArgs
