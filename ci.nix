@@ -3,12 +3,13 @@
 # SPDX-License-Identifier: MPL-2.0
 rec {
   sources = import ./nix/sources.nix;
-  pkgs = import ./nix/nixpkgs-with-haskell-nix.nix;
   xrefcheck = import sources.xrefcheck;
+  haskell-nix = import sources."haskell.nix" {
+    sourcesOverride = { hackage = sources."hackage.nix"; stackage = sources."stackage.nix"; };
+  };
+  pkgs = import sources.nixpkgs haskell-nix.nixpkgsArgs;
   weeder-hacks = import sources.haskell-nix-weeder { inherit pkgs; };
   tezos-client = (import "${sources.tezos-packaging}/pkgs.nix" {}).ocamlPackages.tezos-client;
-
-  haskell-nix = pkgs.haskell-nix;
 
   # all local packages and their subdirectories
   # we need to know subdirectories to make weeder stuff work
@@ -25,8 +26,8 @@ rec {
   # - release -- 'true' for production build, 'false' for development build
   # - commitSha, commitDate -- git revision info used during morley-ledgers compilation
   hs-pkgs = { release, commitSha ? null, commitDate ? null }:
-    haskell-nix.stackProject {
-      src = haskell-nix.haskellLib.cleanGit { src = ./.; };
+    pkgs.haskell-nix.stackProject {
+      src = pkgs.haskell-nix.haskellLib.cleanGit { src = ./.; };
 
       modules = [
         # common options for all local packages:

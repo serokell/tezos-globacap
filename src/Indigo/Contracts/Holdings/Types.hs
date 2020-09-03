@@ -19,7 +19,6 @@ import Fmt (Buildable(..), (+|), (|+))
 
 import qualified Lorentz.Contracts.ManagedLedger.Types as ML hiding (Storage)
 import qualified Lorentz.Contracts.Spec.ManagedLedgerInterface as ML
-import Lorentz.TypeAnns (HasTypeAnn)
 import Michelson.Typed (Notes(..), starNotes)
 import Michelson.Untyped (ann, noAnn)
 import Util.Named
@@ -35,7 +34,7 @@ data StorageFields = StorageFields
   , sfTotalSupply :: Natural
   }
   deriving stock Generic
-  deriving anyclass IsoValue
+  deriving anyclass (IsoValue, HasAnnotation)
 
 data TokenMeta = TokenMeta
   { tmName :: MText
@@ -43,7 +42,7 @@ data TokenMeta = TokenMeta
   , tmId :: MText
   }
   deriving stock (Eq, Generic)
-  deriving anyclass (IsoValue, HasTypeAnn)
+  deriving anyclass (IsoValue, HasAnnotation)
 
 instance HasField TokenMeta "tokenName" MText where
   fieldLens = fieldLensADT #tmName
@@ -133,7 +132,7 @@ data Storage = Storage
   , sApprovals :: BigMap ML.GetAllowanceParams Natural
   , sFields    :: StorageFields
   } deriving stock Generic
-    deriving anyclass IsoValue
+    deriving anyclass (IsoValue, HasAnnotation)
 
 instance TypeHasDoc Storage where
   typeDocName _ = "Holdings storage"
@@ -213,5 +212,5 @@ data Parameter
   deriving stock Generic
   deriving anyclass IsoValue
 
-instance ParameterHasEntryPoints Parameter where
-  type ParameterEntryPointsDerivation Parameter = EpdPlain
+instance ParameterHasEntrypoints Parameter where
+  type ParameterEntrypointsDerivation Parameter = EpdPlain

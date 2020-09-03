@@ -8,6 +8,7 @@ module Nettest.WhitelistIntegration
 import qualified Data.Map as Map (fromList)
 import qualified Data.Set as Set (fromList)
 
+import Lorentz (EntrypointRef(..), mt)
 import Lorentz.Address
 import Michelson.Typed.Convert (untypeValue)
 import Michelson.Typed.Haskell.Value (BigMap(..), IsoValue(..))
@@ -59,41 +60,32 @@ whitelistScenario whitelistContract = uncapsNettest $ do
       , (2, (False, mempty))
       ]
     ) whitelistContract
-  holdingsAddr :: Address <- originateSimple "Holdings"
+  holdings :: TAddress Parameter <- originateSimple "Holdings"
     (mkStorage ownerAddr ownerAddr Nothing mempty 0 dummyMeta) holdingsContract
   let
-    owner, sender, holdings :: AddressOrAlias
+    owner, sender :: AddressOrAlias
     owner = AddressResolved ownerAddr
     sender = AddressResolved senderAddr
-    holdings = AddressResolved holdingsAddr
 
   comment "Scenario with Whitelist"
   comment "Set whitelist as a safelist contract"
-  callFrom owner holdings (ep "setSafelistAddress") (Just whitelist)
+  callFrom owner holdings (Call @"SetSafelistAddress") (#newMbSafelistAddress .! Just whitelist)
   comment "Proper mint, approve, transfer"
-  callFrom owner holdings (ep "mint")
+  callFrom owner holdings (Call @"Mint")
     (#to .! senderAddr, #value .! (100500 :: Natural))
-  callFrom sender holdings (ep "approve")
+  callFrom sender holdings (Call @"Approve")
     (#spender .! ownerAddr, #value .! (500 :: Natural))
-  callFrom owner holdings (ep "transfer")
+  callFrom owner holdings (Call @"Transfer")
     (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
   comment "Unacceptable mint"
-  expectFailure
-    (callFrom owner holdings (ep "mint")
-      (#to .! fakeSender, #value .! (100500 :: Natural))
-    )
-    NettestFailedWith
+  callFrom owner holdings (Call @"Mint")
+    (#to .! fakeSender, #value .! (100500 :: Natural)) `expectFailure`
+    NettestFailedWith whitelist [mt|outbound restricted|]
   comment "Unacceptable approve"
-  expectFailure
-    (callFrom sender holdings (ep "approve")
-      (#spender .! fakeSender, #value .! (10 :: Natural))
-    )
-    NettestFailedWith
+  callFrom sender holdings (Call @"Approve")
+    (#spender .! fakeSender, #value .! (10 :: Natural)) `expectFailure`
+    NettestFailedWith whitelist [mt|outbound restricted|]
   comment "Unacceptable transfer"
-  expectFailure
-    (callFrom owner holdings (ep "transfer")
-      (#from .! senderAddr, #to .! fakeSender, #value .! (200 :: Natural))
-    )
-    NettestFailedWith
-  -- Otherwise scenario is considered as empty by integrational test engine
-  callFrom owner holdings (ep "setPause") True
+  callFrom owner holdings (Call @"Transfer")
+    (#from .! senderAddr, #to .! fakeSender, #value .! (200 :: Natural)) `expectFailure`
+    NettestFailedWith whitelist [mt|outbound not whitelisted|]

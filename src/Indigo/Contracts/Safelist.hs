@@ -22,7 +22,7 @@ data Storage = Storage
   , sReceivers :: Set Address
   }
   deriving stock Generic
-  deriving anyclass IsoValue
+  deriving anyclass (IsoValue, HasAnnotation)
 
 mkStorage :: [(Address, Address)] -> [Address] -> Storage
 mkStorage transfers receivers = Storage
@@ -37,8 +37,8 @@ data Parameter
   deriving stock Generic
   deriving anyclass IsoValue
 
-instance ParameterHasEntryPoints Parameter where
-  type ParameterEntryPointsDerivation Parameter = EpdPlain
+instance ParameterHasEntrypoints Parameter where
+  type ParameterEntrypointsDerivation Parameter = EpdPlain
 
 type instance ErrorArg "assertionFailure" = ()
 
@@ -54,19 +54,19 @@ safelistIndigo
   :: (HasStorage Storage)
   => Var Parameter -> IndigoProcedure
 safelistIndigo param = contractName "Dummy safelist" $ do
-  entryCase (Proxy @PlainEntryPointsKind) param
-    ( #cAssertTransfer //-> \transfer -> do
-        let fromAddr = transfer !. #from
-            toAddr = transfer !. #to
-        res <- newVar False
-        forEach (storage !. #sTransfers) $ \it ->
-          when ((fst it ==. fromAddr) &&. (snd it ==. toAddr)) $ setVar res True
+  entryCase (Proxy @PlainEntrypointsKind) param
+    ( #cAssertTransfer #= \transfer -> do
+        let fromAddr = transfer #! #from
+            toAddr = transfer #! #to
+        res <- new False
+        forEach (storage #! #sTransfers) $ \it ->
+          when ((fst it == fromAddr) && (snd it == toAddr)) $ setVar res True
         assertCustom_ #assertionFailure res
-    , #cAssertReceiver //-> \receiver -> do
-        assertCustom_ #assertionFailure $ (storage !. #sReceivers) #? receiver
-    , #cAssertReceivers //-> \receivers -> do
+    , #cAssertReceiver #= \receiver -> do
+        assertCustom_ #assertionFailure $ (storage #! #sReceivers) ?: receiver
+    , #cAssertReceivers #= \receivers -> do
         forEach receivers $ \receiver -> do
-          assertCustom_ #assertionFailure $ (storage !. #sReceivers) #? receiver
+          assertCustom_ #assertionFailure $ (storage #! #sReceivers) ?: receiver
     )
 
 storage :: HasStorage Storage => Var Storage
