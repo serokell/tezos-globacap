@@ -1,12 +1,14 @@
 # Holdings
 
-**Code revision:** [bc9dd69](https://github.com/serokell/tezos-globacap/blob/bc9dd6988c5ba6e2c9db9775becc7879f3efebbb) *(Wed Aug 12 16:12:54 2020 +0300)*
+**Code revision:** [6ec12da](https://github.com/serokell/tezos-globacap/blob/6ec12da2adb86dac53a47b664c4766af80ab8475) *(Mon Sep 7 17:11:03 2020 +0300)*
 
 
 
 This contract is used to distribute the token, it is optionally regulated by the Safelist contract.
 
 ## Storage
+
+<a name="storage-Holdings-storage"></a>
 
 ---
 
@@ -29,6 +31,8 @@ Apart from that it has `fields` which store various additional information about
 
 ## Entrypoints
 
+<a name="entrypoints-setName"></a>
+
 ---
 
 ### `setName`
@@ -38,6 +42,7 @@ Change token name.
 **Argument:** 
   + **In Haskell:** ***newName*** : [`Text`](#types-Text)
   + **In Michelson:** `(string :newName)`
+    + **Example:** <span id="example-id">`"hello"`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -58,6 +63,8 @@ Change token name.
 
 
 
+<a name="entrypoints-setSymbol"></a>
+
 ---
 
 ### `setSymbol`
@@ -67,6 +74,7 @@ Change token symbol.
 **Argument:** 
   + **In Haskell:** ***newSymbol*** : [`Text`](#types-Text)
   + **In Michelson:** `(string :newSymbol)`
+    + **Example:** <span id="example-id">`"hello"`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -87,6 +95,8 @@ Change token symbol.
 
 
 
+<a name="entrypoints-setSafelistAddress"></a>
+
 ---
 
 ### `setSafelistAddress`
@@ -96,6 +106,7 @@ Change optional Safelist contract address.
 **Argument:** 
   + **In Haskell:** ***newMbSafelistAddress*** : [`Maybe`](#types-Maybe) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
   + **In Michelson:** `(option :newMbSafelistAddress address)`
+    + **Example:** <span id="example-id">`Some "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -114,6 +125,8 @@ Change optional Safelist contract address.
 
 
 
+<a name="entrypoints-transferAdminRights"></a>
+
 ---
 
 ### `transferAdminRights`
@@ -123,6 +136,7 @@ Transfer admin rights to the new address.
 **Argument:** 
   + **In Haskell:** ***newAdmin*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
   + **In Michelson:** `(address :newAdmin)`
+    + **Example:** <span id="example-id">`"KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -143,6 +157,8 @@ Transfer admin rights to the new address.
 
 
 
+<a name="entrypoints-acceptAdminRights"></a>
+
 ---
 
 ### `acceptAdminRights`
@@ -152,6 +168,7 @@ Accept admin rights by the new admin.
 **Argument:** 
   + **In Haskell:** [`()`](#types-lparenrparen)
   + **In Michelson:** `unit`
+    + **Example:** <span id="example-id">`Unit`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -170,6 +187,8 @@ Accept admin rights by the new admin.
 
 
 
+<a name="entrypoints-isAdmin"></a>
+
 ---
 
 ### `isAdmin`
@@ -178,7 +197,8 @@ Check whether address is admin. Returns `True` if the address is the admin.
 
 **Argument:** 
   + **In Haskell:** [`View`](#types-View) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen) [`Bool`](#types-Bool)
-  + **In Michelson:** `(pair address (contract bool))`
+  + **In Michelson:** `(pair (address %viewParam) (contract %viewCallbackTo bool))`
+    + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -191,6 +211,8 @@ Check whether address is admin. Returns `True` if the address is the admin.
 
 
 
+
+<a name="entrypoints-transfer"></a>
 
 ---
 
@@ -209,6 +231,7 @@ In this case current number of tokens that sender is allowed to withdraw from th
 **Argument:** 
   + **In Haskell:** (***from*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***to*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :from) (pair (address :to) (nat :value)))`
+    + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" (Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" 0)`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -235,6 +258,8 @@ In this case current number of tokens that sender is allowed to withdraw from th
 
 
 
+<a name="entrypoints-seize"></a>
+
 ---
 
 ### `seize`
@@ -244,6 +269,7 @@ Forcibly send given amount of tokens from one address to another.
 **Argument:** 
   + **In Haskell:** (***from*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***to*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :from) (pair (address :to) (nat :value)))`
+    + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" (Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" 0)`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -269,6 +295,8 @@ Forcibly send given amount of tokens from one address to another.
 * [`NotEnoughBalance`](#errors-NotEnoughBalance) — Not enough funds to perform the operation.
 
 
+
+<a name="entrypoints-approve"></a>
 
 ---
 
@@ -302,6 +330,7 @@ safely change the allowance for `X` to `K` token must:
 **Argument:** 
   + **In Haskell:** (***spender*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :spender) (nat :value))`
+    + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" 0`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -324,6 +353,8 @@ safely change the allowance for `X` to `K` token must:
 
 
 
+<a name="entrypoints-getAllowance"></a>
+
 ---
 
 ### `getAllowance`
@@ -332,7 +363,8 @@ Returns the approval value between two given addresses.
 
 **Argument:** 
   + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***spender*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)) [`Natural`](#types-Natural)
-  + **In Michelson:** `(pair (pair (address :owner) (address :spender)) (contract nat))`
+  + **In Michelson:** `(pair (pair %viewParam (address :owner) (address :spender)) (contract %viewCallbackTo nat))`
+    + **Example:** <span id="example-id">`Pair (Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB") "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -346,6 +378,8 @@ Returns the approval value between two given addresses.
 
 
 
+<a name="entrypoints-getBalance"></a>
+
 ---
 
 ### `getBalance`
@@ -354,7 +388,8 @@ Returns the balance of the address in the ledger.
 
 **Argument:** 
   + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)) [`Natural`](#types-Natural)
-  + **In Michelson:** `(pair (address :owner) (contract nat))`
+  + **In Michelson:** `(pair (address :owner %viewParam) (contract %viewCallbackTo nat))`
+    + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -368,6 +403,8 @@ Returns the balance of the address in the ledger.
 
 
 
+<a name="entrypoints-getTotalSupply"></a>
+
 ---
 
 ### `getTotalSupply`
@@ -376,7 +413,8 @@ Returns total number of tokens.
 
 **Argument:** 
   + **In Haskell:** [`View`](#types-View) [`()`](#types-lparenrparen) [`Natural`](#types-Natural)
-  + **In Michelson:** `(pair unit (contract nat))`
+  + **In Michelson:** `(pair (unit %viewParam) (contract %viewCallbackTo nat))`
+    + **Example:** <span id="example-id">`Pair Unit "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -390,6 +428,8 @@ Returns total number of tokens.
 
 
 
+<a name="entrypoints-mint"></a>
+
 ---
 
 ### `mint`
@@ -399,6 +439,7 @@ Produces tokens on the account associated with the given address.
 **Argument:** 
   + **In Haskell:** (***to*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :to) (nat :value))`
+    + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" 0`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -423,6 +464,8 @@ Produces tokens on the account associated with the given address.
 
 
 
+<a name="entrypoints-burn"></a>
+
 ---
 
 ### `burn`
@@ -432,6 +475,7 @@ Destroys the given amount of tokens on the account associated with the given add
 **Argument:** 
   + **In Haskell:** (***from*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :from) (nat :value))`
+    + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" 0`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -456,6 +500,8 @@ Destroys the given amount of tokens on the account associated with the given add
 
 
 
+<a name="entrypoints-burnAll"></a>
+
 ---
 
 ### `burnAll`
@@ -465,6 +511,7 @@ Destroy all tokens and allowances.
 **Argument:** 
   + **In Haskell:** [`()`](#types-lparenrparen)
   + **In Michelson:** `unit`
+    + **Example:** <span id="example-id">`Unit`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -485,6 +532,8 @@ Destroy all tokens and allowances.
 
 
 
+<a name="entrypoints-setPause"></a>
+
 ---
 
 ### `setPause`
@@ -497,6 +546,7 @@ no contract can perform `transfer` or `approval` operations.
 **Argument:** 
   + **In Haskell:** ***value*** : [`Bool`](#types-Bool)
   + **In Michelson:** `(bool :value)`
+    + **Example:** <span id="example-id">`True`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -515,6 +565,8 @@ no contract can perform `transfer` or `approval` operations.
 
 
 
+<a name="entrypoints-setTransferable"></a>
+
 ---
 
 ### `setTransferable`
@@ -524,6 +576,7 @@ Change transferable flag.
 **Argument:** 
   + **In Haskell:** ***value*** : [`Bool`](#types-Bool)
   + **In Michelson:** `(bool :value)`
+    + **Example:** <span id="example-id">`True`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
@@ -540,6 +593,8 @@ Change transferable flag.
 
 
 
+<a name="entrypoints-getTokenMeta"></a>
+
 ---
 
 ### `getTokenMeta`
@@ -548,7 +603,8 @@ Get token meta data: name, symbol and id.
 
 **Argument:** 
   + **In Haskell:** [`View`](#types-View) [`()`](#types-lparenrparen) [`TokenMeta`](#types-TokenMeta)
-  + **In Michelson:** `(pair unit (contract (pair string (pair string string))))`
+  + **In Michelson:** `(pair (unit %viewParam) (contract %viewCallbackTo (pair (string %tmName) (pair (string %tmSymbol) (string %tmId)))))`
+    + **Example:** <span id="example-id">`Pair Unit "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
 <details>
   <summary><b>How to call this entrypoint</b></summary>
