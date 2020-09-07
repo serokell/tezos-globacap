@@ -23,12 +23,12 @@ storage = storageVar
 ensureSenderIsOwner :: HasStorage Storage => IndigoProcedure
 ensureSenderIsOwner = do
   ownerAddr <- getStorageField @Storage #owner
-  assertCustom_ #senderIsNotOwner $ ownerAddr ==. sender
+  assertCustom_ #senderIsNotOwner $ ownerAddr == sender
 
 ensureSenderIsAdmin :: HasStorage Storage => IndigoProcedure
 ensureSenderIsAdmin = do
   admin <- getStorageField @Storage #admin
-  assertCustom_ #senderIsNotAdmin $ admin ==. sender
+  assertCustom_ #senderIsNotAdmin $ admin == sender
 
 ensureIsTransferable :: HasStorage Storage => IndigoProcedure
 ensureIsTransferable = do
@@ -51,17 +51,17 @@ holdingsIndigo param = contractName "Holdings" $ do
     "This contract is used to distribute the token, it is optionally regulated by \
     \the Safelist contract."
   entryCaseSimple param
-    ( #cSetName //-> \newName -> do
+    ( #cSetName #= \newName -> do
         doc $ DDescription "Change token name."
         ensureSenderIsAdmin
         ensureNotPaused @Storage
         setStorageField @Storage #tokenName $ UnName #newName newName
-    , #cSetSymbol //-> \newSymbol -> do
+    , #cSetSymbol #= \newSymbol -> do
         doc $ DDescription "Change token symbol."
         ensureSenderIsAdmin
         ensureNotPaused @Storage
         setStorageField @Storage #tokenSymbol $ UnName #newSymbol newSymbol
-    , #cSetSafelistAddress //-> \newMbSafelistAddrNamed -> do
+    , #cSetSafelistAddress #= \newMbSafelistAddrNamed -> do
         doc $ DDescription
           "Change optional Safelist contract address."
         ensureSenderIsOwner
@@ -83,83 +83,83 @@ holdingsIndigo param = contractName "Holdings" $ do
                  (eprName $ Call @"assertReceivers") addr
                 ) (() <$ failCustom #invalidSafelistAddr [mt|assertReceivers|])
           )
-    , #cTransferAdminRights //-> \newAdmin -> do
+    , #cTransferAdminRights #= \newAdmin -> do
         doc $ DDescription "Transfer admin rights to the new address."
         ensureSenderIsOwner
         ensureNotPaused @Storage
         setStorageField @Storage #mbNewAdmin $ some $ UnName #newAdmin newAdmin
-    , #cAcceptAdminRights //-> \_unit -> do
+    , #cAcceptAdminRights #= \_unit -> do
         doc $ DDescription "Accept admin rights by the new admin."
         mbNewAdmin <- getStorageField @Storage #mbNewAdmin
         ifSome mbNewAdmin
           (\newAdmin ->
-              if newAdmin /=. sender
+              if newAdmin /= sender
                 then () <$ failCustom_ #senderIsNotNewAdmin
                 else do
                 setStorageField @Storage #admin newAdmin
                 setStorageField @Storage #mbNewAdmin none
           )
           (() <$ failCustom_ #notInTransferAdminRightsMode)
-    , #cIsAdmin //-> \v -> do
+    , #cIsAdmin #= \v -> do
         doc $ DDescription
           "Check whether address is admin. Returns `True` if the address is the admin."
         project v $ \addr -> do
           admin <- getStorageField @Storage #admin
-          return $ admin ==. addr
-    , #cTransfer //-> \tParams -> do
+          return $ admin == addr
+    , #cTransfer #= \tParams -> do
         -- pause check is already done in Lorentz code
         ensureIsTransferable
-        let from = tParams !. #from
-            to = tParams !. #to
+        let from = tParams #! #from
+            to = tParams #! #to
         callAssertTransfer $ pair (Name #from from) (Name #to to)
         transfer @Storage tParams
-    , #cSeize //-> \tParams -> do
+    , #cSeize #= \tParams -> do
         doc $ DDescription
           "Forcibly send given amount of tokens from one address to another."
         ensureSenderIsAdmin
         ensureNotPaused @Storage
         ensureIsTransferable
-        let from = tParams !. #from
-            to = tParams !. #to
-            value = tParams !. #value
+        let from = tParams #! #from
+            to = tParams #! #to
+            value = tParams #! #value
         callAssertTransfer $ pair (Name #from from) (Name #to to)
         debitFrom @Storage from value
         creditTo @Storage to value
-    , #cApprove //-> \aParams -> do
+    , #cApprove #= \aParams -> do
         -- pause check is already done in Lorentz code
-        let spender = aParams !. #spender
+        let spender = aParams #! #spender
             receivers = spender .: sender .: nil
         callAssertReceivers receivers
         approve @Storage aParams
-    , #cGetAllowance //-> getAllowance @Storage
-    , #cGetBalance //-> getBalance @Storage
-    , #cGetTotalSupply //-> getTotalSupply @Storage
-    , #cMint //-> \mParams -> do
+    , #cGetAllowance #= getAllowance @Storage
+    , #cGetBalance #= getBalance @Storage
+    , #cGetTotalSupply #= getTotalSupply @Storage
+    , #cMint #= \mParams -> do
         ensureNotPaused @Storage
         -- admin check is already done in Lorentz code
-        let to = mParams !. #to
+        let to = mParams #! #to
         callAssertReceiver to
         mint @Storage mParams
-    , #cBurn //-> \bParams -> do
+    , #cBurn #= \bParams -> do
         ensureNotPaused @Storage
         -- admin check is already done in Lorentz code
         burn @Storage bParams
-    , #cBurnAll //-> \_ -> do
+    , #cBurnAll #= \_ -> do
         doc $ DDescription "Destroy all tokens and allowances."
         ensureSenderIsAdmin
         ensureNotPaused @Storage
         setField storage #ledger emptyBigMap
         setField storage #approvals emptyBigMap
         setStorageField @Storage #totalSupply (0 nat)
-    , #cSetPause //-> \pausedNamed -> do
+    , #cSetPause #= \pausedNamed -> do
         -- admin check is already done in Lorentz code
         let paused = UnName #value pausedNamed
         setPause @Storage paused
-    , #cSetTransferable //-> \transferable -> do
+    , #cSetTransferable #= \transferable -> do
         doc $ DDescription "Change transferable flag."
         ensureSenderIsAdmin
         setStorageField @Storage #transferable $ UnName #value transferable
-    , #cGetTokenMeta //-> \v -> do
+    , #cGetTokenMeta #= \v -> do
         doc $ DDescription "Get token meta data: name, symbol and id."
         project v $ \_ -> getStorageField @Storage #tokenMeta
     )

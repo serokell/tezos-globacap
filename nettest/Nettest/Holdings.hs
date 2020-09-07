@@ -5,8 +5,9 @@ module Nettest.Holdings
   ( nettestScenario
   ) where
 
+import Lorentz (CustomError(..), EntrypointRef(..))
 import Lorentz.Address
-import Michelson.Untyped.EntryPoints
+import Michelson.Untyped.Entrypoints
 import Morley.Nettest
 import Util.Named
 import Tezos.Core (toMutez)
@@ -25,9 +26,9 @@ nettestScenario = uncapsNettest $ do
   senderAddr :: Address <- newAddress "sender"
   receiver :: Address <- newAddress "receiver"
   fakeSender :: Address <- newAddress "fakeSender"
-  holdingsAddr :: Address <- originateSimple "Holdings"
+  (holdings :: TAddress Parameter) <- originateSimple "Holdings"
     (mkStorage ownerAddr ownerAddr Nothing mempty 0 dummyMeta) holdingsContract
-  safelistAddr :: Address <- originateSimple "DummySafelist"
+  (safelistAddr :: TAddress SL.Parameter) <- originateSimple "DummySafelist"
     (SL.mkStorage [(senderAddr, receiver)] [senderAddr, receiver, adminAddr])
     SL.safelistContract
   let
@@ -37,8 +38,6 @@ nettestScenario = uncapsNettest $ do
     someGuy = AddressResolved someGuyAddr
     sender = AddressResolved senderAddr
 
-    holdings :: AddressOrAlias
-    holdings = AddressResolved holdingsAddr
     -- We transfer additional mutez to admin so that he doesn't run out of it.
     -- Probably can be removed after https://gitlab.com/morley-framework/morley/-/issues/139
     -- is resolved. Currently we spend 10 times more fee than needed.
@@ -53,65 +52,59 @@ nettestScenario = uncapsNettest $ do
 
   comment "Holdings nettest scenario"
   comment "Test admin rights rotation"
-  callFrom owner holdings (ep "transferAdminRights") adminAddr
-  expectFailure (callFrom someGuy holdings (ep "acceptAdminRights") ())
-    NettestFailedWith
-  callFrom admin holdings (ep "acceptAdminRights") ()
-  expectFailure (callFrom someGuy holdings (ep "transferAdminRights") someGuyAddr)
-    NettestFailedWith
+  callFrom owner holdings (Call @"TransferAdminRights") (#newAdmin .! adminAddr)
+  callFrom someGuy holdings (Call @"AcceptAdminRights") () `expectFailure`
+    NettestFailedWithError (CustomError #senderIsNotNewAdmin ())
+  callFrom admin holdings (Call @"AcceptAdminRights") ()
+  callFrom someGuy holdings (Call @"TransferAdminRights") (#newAdmin .! someGuyAddr) `expectFailure`
+    NettestFailedWithError (CustomError #senderIsNotOwner ())
   comment "Test token actions: mint, approve, transfer, seize, burn"
-  callFrom admin holdings (ep "mint")
+  callFrom admin holdings (Call @"Mint")
     (#to .! senderAddr, #value .! (100500 :: Natural))
   comment "Now with safelist"
-  callFrom owner holdings (ep "setSafelistAddress") (Just safelistAddr)
-  expectFailure
-    (callFrom admin holdings (ep "mint")
-      (#to .! fakeSender, #value .! (100500 :: Natural))
-    )
-    NettestFailedWith
-  callFrom sender holdings (ep "approve")
+  callFrom owner holdings (Call @"SetSafelistAddress")
+    (#newMbSafelistAddress .! Just (toAddress safelistAddr))
+  callFrom admin holdings (Call @"Mint")
+    (#to .! fakeSender, #value .! (100500 :: Natural)) `expectFailure`
+    NettestFailedWithError (CustomError #assertionFailure ())
+  callFrom sender holdings (Call @"Approve")
     (#spender .! adminAddr, #value .! (200 :: Natural))
-  expectFailure
-    (callFrom admin holdings (ep "transfer")
-      (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
-    )
-    NettestFailedWith
-  callFrom sender holdings (ep "transfer")
+  callFrom admin holdings (Call @"Transfer")
+    (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural)) `expectFailure`
+    NettestFailedWithError
+    (CustomError #notEnoughAllowance (#required .! 300, #present .! 200))
+  callFrom sender holdings (Call @"Transfer")
     (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
-  callFrom admin holdings (ep "seize")
-      (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
-  expectFailure
-    (callFrom someGuy holdings (ep "burn")
-      (#from .! senderAddr, #value .! (100000 :: Natural))
-    )
-    NettestFailedWith
-  callFrom admin holdings (ep "burn")
+  callFrom admin holdings (Call @"Seize")
+    (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
+  callFrom someGuy holdings (Call @"Burn")
+    (#from .! senderAddr, #value .! (100000 :: Natural)) `expectFailure`
+    NettestFailedWithError
+    (CustomError #senderIsNotAdmin ())
+  callFrom admin holdings (Call @"Burn")
     (#from .! senderAddr, #value .! (90000 :: Natural))
-  expectFailure
-    (callFrom admin holdings (ep "transfer")
-      (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
-    )
-    NettestFailedWith
-  callFrom admin holdings (ep "burnAll") ()
+  callFrom admin holdings (Call @"Transfer")
+    (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural)) `expectFailure`
+    NettestFailedWithError
+    (CustomError #notEnoughAllowance (#required .! 300, #present .! 200))
+  callFrom admin holdings (Call @"BurnAll") ()
   comment "Disable transfers"
-  callFrom admin holdings (ep "setTransferable") False
-  callFrom admin holdings (ep "mint")
+  callFrom admin holdings (Call @"SetTransferable") (#value .! False)
+  callFrom admin holdings (Call @"Mint")
     (#to .! senderAddr, #value .! (100500 :: Natural))
-  expectFailure
-    (callFrom admin holdings (ep "transfer")
-      (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
-    )
-    NettestFailedWith
+  callFrom admin holdings (Call @"Transfer")
+    (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural)) `expectFailure`
+    NettestFailedWithError (CustomError #nonTransferable ())
   comment "Pause Holdings"
-  callFrom admin holdings (ep "setPause") True
+  callFrom admin holdings (Call @"SetPause") (#value .! True)
   comment "Unset safelist"
-  callFrom owner holdings (ep "setSafelistAddress") (Nothing :: Maybe Address)
-  expectFailure
-    (callFrom admin holdings (ep "mint")
-      (#to .! senderAddr, #value .! (100500 :: Natural))
-    ) NettestFailedWith
+  callFrom owner holdings (Call @"SetSafelistAddress")
+    (#newMbSafelistAddress .! Nothing)
+  callFrom admin holdings (Call @"Mint")
+    (#to .! senderAddr, #value .! (100500 :: Natural)) `expectFailure`
+    NettestFailedWithError (CustomError #tokenOperationsArePaused ())
   comment "Unpause Holdings"
-  callFrom admin holdings (ep "setPause") False
+  callFrom admin holdings (Call @"SetPause") (#value .! False)
   comment "Mint works for nonReciever"
-  callFrom admin holdings (ep "mint")
+  callFrom admin holdings (Call @"Mint")
     (#to .! fakeSender, #value .! (100500 :: Natural))

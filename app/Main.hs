@@ -51,7 +51,7 @@ contracts = ContractRegistry $ Map.fromList
     { ciContract = holdingsContract
     , ciIsDocumented = True
     , ciStorageParser = Just holdingsStorageParser
-    , ciStorageNotes = H.storageNotes
+    , ciStorageNotes = Just H.storageNotes
     }
   ]
 
