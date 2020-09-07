@@ -54,6 +54,7 @@ tests:
       - test
 
     dependencies:
+      - cleveland
       - globacap
       - lorentz
       - morley
@@ -70,10 +71,10 @@ tests:
       - nettest
 
     dependencies:
+      - cleveland
       - containers
       - globacap
       - lorentz
       - morley
-      - morley-nettest
       - morley-prelude
       - optparse-applicative

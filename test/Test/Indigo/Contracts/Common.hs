@@ -37,9 +37,9 @@ originateHoldings owner mbSafelist =
 
 expectStorageUpdate
   :: (ToAddress addr, NiceStorage st)
-  => addr -> (st -> Bool) -> Text -> SuccessValidator
+  => addr -> (st -> Bool) -> Text -> IntegrationalScenario
 expectStorageUpdate contractAddr validateStorage msg =
   lExpectStorageUpdate contractAddr
     (\st -> bool
-      (Left $ CustomValidationError msg) (Right ()) $ validateStorage st
+      (Left $ CustomTestError msg) (Right ()) $ validateStorage st
     )
