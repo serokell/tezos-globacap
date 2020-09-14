@@ -60,15 +60,15 @@
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "tezos-packaging": {
-        "branch": "v7.1-1",
+        "branch": "v7.4-1",
         "description": "Various form of distribution for tezos-related executables",
         "homepage": "",
         "owner": "serokell",
         "repo": "tezos-packaging",
-        "rev": "84a3d6cee45912503d2c0dbb96d1b476ce01b47c",
-        "sha256": "03z4c3f9mf113xiszbns8rs0l4adl4jw657cdcrjbsjnr7xpdv5m",
+        "rev": "e583224fcc5dea18a58cba3acb56f8ee5d8067e5",
+        "sha256": "0z74wggzw3p9dcxlyivymnfq4z19d5dmpxxd5zchvqhr3mfsnxsh",
         "type": "tarball",
-        "url": "https://github.com/serokell/tezos-packaging/archive/84a3d6cee45912503d2c0dbb96d1b476ce01b47c.tar.gz",
+        "url": "https://github.com/serokell/tezos-packaging/archive/e583224fcc5dea18a58cba3acb56f8ee5d8067e5.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "xrefcheck": {
