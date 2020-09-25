@@ -62,7 +62,7 @@ steps:
       automatic:
         limit: 1
 
-  - label: nettest-local-chain-scheduled
+  - label: nettest-scheduled-carthagenet
     if: build.source == "schedule"
     env:
       NETTEST_NODE_ADDR: "carthage.testnet.tezos.serokell.team"
@@ -70,6 +70,16 @@ steps:
       # Note that testnet moneybag can run out of tz. If this happened, someone should transfer it some
       # more tz, its address: tz1VwWdetdADCEMySCumYXWtvf9pZQV3CmE5
       MONEYBAG: "unencrypted:edsk4boUjEukc4THSkxiS32KrLEgQDcZmWg3YMhhdTfBF7fxKJAhdq"
+    commands: *run-nettest
+    retry: *retry-nettest
+
+  - label: nettest-scheduled-delphinet
+    if: build.source == "schedule"
+    env:
+      NETTEST_NODE_ADDR: "delphi.testnet.tezos.serokell.team"
+      NETTEST_NODE_PORT: "8732"
+      # Same as in carthagenet
+      MONEYBAG: "unencrypted:edsk3UH7bwt2i3D6VQCmT8ZkMufdFEqJr79StJjguuk6W4wZccSp9J"
     commands: *run-nettest
     retry: *retry-nettest
 
