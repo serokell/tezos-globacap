@@ -49,11 +49,11 @@ steps:
     - nix-build ci.nix -A packages.globacap.tests.globacap-test
     - ./result/bin/globacap-test
 
-  - label: nettest-local-chain-006
+  - label: nettest-local-chain-007
     if: *not_scheduled_not_autodoc
     env:
       NETTEST_NODE_ADDR: "localhost"
-      NETTEST_NODE_PORT: "8734"
+      NETTEST_NODE_PORT: "8735"
       MONEYBAG: "unencrypted:edsk3AvAoPS5jFov49aWBQ9oVtCPwNSne2CriHvkFxfeCg4Srr5bak"
     commands: &run-nettest
     - nix-build ci.nix -A packages.globacap.tests.globacap-nettest
@@ -62,37 +62,16 @@ steps:
       automatic:
         limit: 1
 
-  - label: nettest-local-chain-007
-    if: *not_scheduled_not_autodoc
-    env:
-      NETTEST_NODE_ADDR: "localhost"
-      NETTEST_NODE_PORT: "8735"
-      MONEYBAG: "unencrypted:edsk3AvAoPS5jFov49aWBQ9oVtCPwNSne2CriHvkFxfeCg4Srr5bak"
-    commands: *run-nettest
-    retry: *retry-nettest
-
-  - label: nettest-scheduled-carthagenet
+  - label: nettest-scheduled-delphinet
     if: build.source == "schedule"
     # use another agent for long scheduled jobs
     agents:
       queue: "scheduled"
     env:
-      NETTEST_NODE_ADDR: "carthage.testnet.tezos.serokell.team"
-      NETTEST_NODE_PORT: "8732"
-      # Note that testnet moneybag can run out of tz. If this happened, someone should transfer it some
-      # more tz, its address: tz1VwWdetdADCEMySCumYXWtvf9pZQV3CmE5
-      MONEYBAG: "unencrypted:edsk4boUjEukc4THSkxiS32KrLEgQDcZmWg3YMhhdTfBF7fxKJAhdq"
-    commands: *run-nettest
-    retry: *retry-nettest
-
-  - label: nettest-scheduled-delphinet
-    if: build.source == "schedule"
-    agents:
-      queue: "scheduled"
-    env:
       NETTEST_NODE_ADDR: "delphi.testnet.tezos.serokell.team"
       NETTEST_NODE_PORT: "8732"
-      # Same as in carthagenet
+      # Note that testnet moneybag can run out of tz. If this happened, someone should transfer it some
+      # more tz, its address: tz1NCV82ThTCF1vU2KEGv3ZeZw4hhAPbD5UM
       MONEYBAG: "unencrypted:edsk3UH7bwt2i3D6VQCmT8ZkMufdFEqJr79StJjguuk6W4wZccSp9J"
     commands: *run-nettest
     retry: *retry-nettest
