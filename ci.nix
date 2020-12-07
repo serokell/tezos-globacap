@@ -40,8 +40,9 @@ rec {
               ]
               # produce *.dump-hi files, required for weeder:
                 ++ optionals (!release) [ "-ddump-to-file" "-ddump-hi" ]);
-            dontStrip = !release; # strip in release mode, reduces closure size
-            doHaddock = true; # enable haddock for local packages
+
+            # enable haddock for local packages
+            doHaddock = true;
 
             # in non-release mode collect all *.dump-hi files (required for weeder)
             postInstall =
