@@ -40,8 +40,9 @@ rec {
               ]
               # produce *.dump-hi files, required for weeder:
                 ++ optionals (!release) [ "-ddump-to-file" "-ddump-hi" ]);
-            dontStrip = !release; # strip in release mode, reduces closure size
-            doHaddock = !release; # don't haddock in release mode
+
+            # enable haddock for local packages
+            doHaddock = true;
 
             # in non-release mode collect all *.dump-hi files (required for weeder)
             postInstall =
@@ -87,8 +88,10 @@ rec {
   # returns a list of all components (library + exes + tests + benchmarks) for a package
   get-package-components = pkg:
     with pkgs.lib;
-    optional (pkg ? library) pkg.library ++ attrValues pkg.exes
-    ++ attrValues pkg.tests ++ attrValues pkg.benchmarks;
+    optionals (pkg ? library) [ pkg.library pkg.library.haddock ]
+    ++ attrValues pkg.exes
+    ++ attrValues pkg.tests
+    ++ attrValues pkg.benchmarks;
 
   # per-package list of components
   components =
