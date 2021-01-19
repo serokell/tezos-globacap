@@ -61,6 +61,13 @@ steps:
       automatic:
         limit: 1
 
+  - label: nettest-local-chain-008
+    if: *not_scheduled_not_autodoc
+    env:
+      NETTEST_NODE_ENDPOINT: "http://localhost:8734"
+    commands: *run-nettest
+    retry: *retry-nettest
+
   - label: nettest-scheduled-delphinet
     if: build.source == "schedule"
     # use another agent for long scheduled jobs
@@ -68,6 +75,19 @@ steps:
       queue: "scheduled"
     env:
       NETTEST_NODE_ENDPOINT: "http://delphi.testnet.tezos.serokell.team:8732"
+      # Note that testnet moneybag can run out of tz. If this happened, someone should transfer it some
+      # more tz, its address: tz1NCV82ThTCF1vU2KEGv3ZeZw4hhAPbD5UM
+      MONEYBAG: "unencrypted:edsk3UH7bwt2i3D6VQCmT8ZkMufdFEqJr79StJjguuk6W4wZccSp9J"
+    commands: *run-nettest
+    retry: *retry-nettest
+
+  - label: nettest-scheduled-edonet
+    if: build.source == "schedule"
+    # use another agent for long scheduled jobs
+    agents:
+      queue: "scheduled"
+    env:
+      NETTEST_NODE_ENDPOINT: "http://edo.testnet.tezos.serokell.team:8732"
       # Note that testnet moneybag can run out of tz. If this happened, someone should transfer it some
       # more tz, its address: tz1NCV82ThTCF1vU2KEGv3ZeZw4hhAPbD5UM
       MONEYBAG: "unencrypted:edsk3UH7bwt2i3D6VQCmT8ZkMufdFEqJr79StJjguuk6W4wZccSp9J"
