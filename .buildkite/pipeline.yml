@@ -3,6 +3,7 @@
 
 env:
   TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER: "Y"
+  MONEYBAG: "unencrypted:edsk3AvAoPS5jFov49aWBQ9oVtCPwNSne2CriHvkFxfeCg4Srr5bak"
 
 steps:
   - label: hlint
@@ -52,9 +53,7 @@ steps:
   - label: nettest-local-chain-007
     if: *not_scheduled_not_autodoc
     env:
-      NETTEST_NODE_ADDR: "localhost"
-      NETTEST_NODE_PORT: "8735"
-      MONEYBAG: "unencrypted:edsk3AvAoPS5jFov49aWBQ9oVtCPwNSne2CriHvkFxfeCg4Srr5bak"
+      NETTEST_NODE_ENDPOINT: "http://localhost:8735"
     commands: &run-nettest
     - nix-build ci.nix -A packages.globacap.tests.globacap-nettest
     - nix run -f ci.nix tezos-client -c ./scripts/ci/run-local-chain-nettest.sh result/bin/globacap-nettest
@@ -68,8 +67,7 @@ steps:
     agents:
       queue: "scheduled"
     env:
-      NETTEST_NODE_ADDR: "delphi.testnet.tezos.serokell.team"
-      NETTEST_NODE_PORT: "8732"
+      NETTEST_NODE_ENDPOINT: "http://delphi.testnet.tezos.serokell.team:8732"
       # Note that testnet moneybag can run out of tz. If this happened, someone should transfer it some
       # more tz, its address: tz1NCV82ThTCF1vU2KEGv3ZeZw4hhAPbD5UM
       MONEYBAG: "unencrypted:edsk3UH7bwt2i3D6VQCmT8ZkMufdFEqJr79StJjguuk6W4wZccSp9J"

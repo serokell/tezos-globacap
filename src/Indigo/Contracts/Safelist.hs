@@ -53,7 +53,7 @@ safelistContract = defaultContract $ compileIndigoContract safelistIndigo
 safelistIndigo
   :: (HasStorage Storage)
   => Var Parameter -> IndigoProcedure
-safelistIndigo param = contractName "Dummy safelist" $ do
+safelistIndigo param = docGroup "Dummy safelist" $ do
   entryCase (Proxy @PlainEntrypointsKind) param
     ( #cAssertTransfer #= \transfer -> do
         let fromAddr = transfer #! #from

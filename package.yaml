@@ -76,5 +76,6 @@ tests:
       - globacap
       - lorentz
       - morley
+      - morley-client
       - morley-prelude
       - optparse-applicative

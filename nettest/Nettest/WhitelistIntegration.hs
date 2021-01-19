@@ -40,7 +40,7 @@ mkWhitelistStorage issuer users whitelists =
   , wsAdmin = issuer
   }
 
-whitelistScenario :: U.Contract -> NettestScenario
+whitelistScenario :: U.Contract -> NettestScenario m
 whitelistScenario whitelistContract = uncapsNettest $ do
   comment "Registering addresses"
   ownerAddr :: Address <- resolveNettestAddress
@@ -69,23 +69,23 @@ whitelistScenario whitelistContract = uncapsNettest $ do
 
   comment "Scenario with Whitelist"
   comment "Set whitelist as a safelist contract"
-  callFrom owner holdings (Call @"SetSafelistAddress") (#newMbSafelistAddress .! Just whitelist)
+  withSender owner $ call holdings (Call @"SetSafelistAddress") (#newMbSafelistAddress .! Just whitelist)
   comment "Proper mint, approve, transfer"
-  callFrom owner holdings (Call @"Mint")
+  withSender owner $ call holdings (Call @"Mint")
     (#to .! senderAddr, #value .! (100500 :: Natural))
-  callFrom sender holdings (Call @"Approve")
+  withSender sender $ call holdings (Call @"Approve")
     (#spender .! ownerAddr, #value .! (500 :: Natural))
-  callFrom owner holdings (Call @"Transfer")
+  withSender owner $ call holdings (Call @"Transfer")
     (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
   comment "Unacceptable mint"
-  callFrom owner holdings (Call @"Mint")
-    (#to .! fakeSender, #value .! (100500 :: Natural)) `expectFailure`
+  (withSender owner $ call holdings (Call @"Mint")
+    (#to .! fakeSender, #value .! (100500 :: Natural))) `expectFailure`
     NettestFailedWith whitelist [mt|outbound restricted|]
   comment "Unacceptable approve"
-  callFrom sender holdings (Call @"Approve")
-    (#spender .! fakeSender, #value .! (10 :: Natural)) `expectFailure`
+  (withSender sender $ call holdings (Call @"Approve")
+    (#spender .! fakeSender, #value .! (10 :: Natural))) `expectFailure`
     NettestFailedWith whitelist [mt|outbound restricted|]
   comment "Unacceptable transfer"
-  callFrom owner holdings (Call @"Transfer")
-    (#from .! senderAddr, #to .! fakeSender, #value .! (200 :: Natural)) `expectFailure`
+  (withSender owner $ call holdings (Call @"Transfer")
+    (#from .! senderAddr, #to .! fakeSender, #value .! (200 :: Natural))) `expectFailure`
     NettestFailedWith whitelist [mt|outbound not whitelisted|]
