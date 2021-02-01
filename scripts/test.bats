@@ -27,7 +27,7 @@ setup () {
 }
 
 @test "Print initial Holdings storage" {
-  "$globacap" storage-Holdings --owner "$dummyAddress" --admin "$dummyAddress" \
+  "$globacap" storage --owner "$dummyAddress" --admin "$dummyAddress" \
     --safelist-address "$dummyContractAddress" --token-name "TokenKek" \
     --token-symbol "Kk" --token-id "KEK"
 }

@@ -5,10 +5,10 @@
         "homepage": "",
         "owner": "input-output-hk",
         "repo": "hackage.nix",
-        "rev": "9250a9c48138c0f392db4ac476e061f5d05a3d8b",
-        "sha256": "0b2xhk64fjmgjh645bzwp5n5sby2jqs3gb4fxp0lwqsr4f678ca8",
+        "rev": "7796c019978766d8c785d6469ca818c87411414a",
+        "sha256": "1ssspxrdq6jj056qkghdv7mak1q2za6x25h4fd9dfs9i91v92jlk",
         "type": "tarball",
-        "url": "https://github.com/input-output-hk/hackage.nix/archive/9250a9c48138c0f392db4ac476e061f5d05a3d8b.tar.gz",
+        "url": "https://github.com/input-output-hk/hackage.nix/archive/7796c019978766d8c785d6469ca818c87411414a.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "haskell-nix-weeder": {
@@ -60,15 +60,15 @@
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "tezos-packaging": {
-        "branch": "v7.4-1",
+        "branch": "v8.1-1",
         "description": "Various form of distribution for tezos-related executables",
         "homepage": "",
         "owner": "serokell",
         "repo": "tezos-packaging",
-        "rev": "e583224fcc5dea18a58cba3acb56f8ee5d8067e5",
-        "sha256": "0z74wggzw3p9dcxlyivymnfq4z19d5dmpxxd5zchvqhr3mfsnxsh",
+        "rev": "8bd7371ed13640e66477991c095dd5d0ea9f9b27",
+        "sha256": "0rr8chy0zpwxnjknpqcrwh7yc16ghsk2dlmhvxfbm6y507g2k9d4",
         "type": "tarball",
-        "url": "https://github.com/serokell/tezos-packaging/archive/e583224fcc5dea18a58cba3acb56f8ee5d8067e5.tar.gz",
+        "url": "https://github.com/serokell/tezos-packaging/archive/8bd7371ed13640e66477991c095dd5d0ea9f9b27.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
     "xrefcheck": {

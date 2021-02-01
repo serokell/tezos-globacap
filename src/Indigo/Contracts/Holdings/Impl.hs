@@ -3,7 +3,6 @@
 -- SPDX-License-Identifier: MPL-2.0
 module Indigo.Contracts.Holdings.Impl
   ( holdingsContract
-  , holdingsDoc
   ) where
 
 import Indigo
@@ -38,15 +37,12 @@ ensureIsTransferable = do
 holdingsContract :: Contract Parameter Storage
 holdingsContract = defaultContract $ compileIndigoContract holdingsIndigo
 
-holdingsDoc :: ContractDoc
-holdingsDoc = buildLorentzDoc $ cCode holdingsContract
-
 holdingsIndigo
   :: (HasStorage Storage, HasSideEffects)
   => Var Parameter -> IndigoProcedure
-holdingsIndigo param = contractName "Holdings" $ do
-  contractGeneral $ doc DGitRevisionUnknown
-  docStorage @Storage
+holdingsIndigo param = docGroup "Holdings" $ do
+  contractGeneralDefault
+  doc $ dStorage @Storage
   doc $ DDescription
     "This contract is used to distribute the token, it is optionally regulated by \
     \the Safelist contract."
@@ -55,17 +51,17 @@ holdingsIndigo param = contractName "Holdings" $ do
         doc $ DDescription "Change token name."
         ensureSenderIsAdmin
         ensureNotPaused @Storage
-        setStorageField @Storage #tokenName $ UnName #newName newName
+        setStorageField @Storage #tokenName $ unName #newName newName
     , #cSetSymbol #= \newSymbol -> do
         doc $ DDescription "Change token symbol."
         ensureSenderIsAdmin
         ensureNotPaused @Storage
-        setStorageField @Storage #tokenSymbol $ UnName #newSymbol newSymbol
+        setStorageField @Storage #tokenSymbol $ unName #newSymbol newSymbol
     , #cSetSafelistAddress #= \newMbSafelistAddrNamed -> do
         doc $ DDescription
           "Change optional Safelist contract address."
         ensureSenderIsOwner
-        let newMbSafelistAddr = UnName #newMbSafelistAddress newMbSafelistAddrNamed
+        let newMbSafelistAddr = unName #newMbSafelistAddress newMbSafelistAddrNamed
         setStorageField @Storage #mbSafelistAddress newMbSafelistAddr
         whenSome newMbSafelistAddr
           (\addr -> do
@@ -73,33 +69,33 @@ holdingsIndigo param = contractName "Holdings" $ do
               whenNone
                 (contractCallingUnsafe @("from" :! Address, "to" :! Address)
                  (eprName $ Call @"assertTransfer") addr
-                ) (() <$ failCustom #invalidSafelistAddr [mt|assertTransfer|])
+                ) (failCustom @() #invalidSafelistAddr [mt|assertTransfer|])
               whenNone
                 (contractCallingUnsafe @Address
                  (eprName $ Call @"assertReceiver") addr
-                ) (() <$ failCustom #invalidSafelistAddr [mt|assertReceiver|])
+                ) (failCustom @() #invalidSafelistAddr [mt|assertReceiver|])
               whenNone
                 (contractCallingUnsafe @[Address]
                  (eprName $ Call @"assertReceivers") addr
-                ) (() <$ failCustom #invalidSafelistAddr [mt|assertReceivers|])
+                ) (failCustom @() #invalidSafelistAddr [mt|assertReceivers|])
           )
     , #cTransferAdminRights #= \newAdmin -> do
         doc $ DDescription "Transfer admin rights to the new address."
         ensureSenderIsOwner
         ensureNotPaused @Storage
-        setStorageField @Storage #mbNewAdmin $ some $ UnName #newAdmin newAdmin
+        setStorageField @Storage #mbNewAdmin $ some $ unName #newAdmin newAdmin
     , #cAcceptAdminRights #= \_unit -> do
         doc $ DDescription "Accept admin rights by the new admin."
         mbNewAdmin <- getStorageField @Storage #mbNewAdmin
         ifSome mbNewAdmin
           (\newAdmin ->
               if newAdmin /= sender
-                then () <$ failCustom_ #senderIsNotNewAdmin
+                then failCustom_ @() #senderIsNotNewAdmin
                 else do
                 setStorageField @Storage #admin newAdmin
                 setStorageField @Storage #mbNewAdmin none
           )
-          (() <$ failCustom_ #notInTransferAdminRightsMode)
+          (failCustom_ @() #notInTransferAdminRightsMode)
     , #cIsAdmin #= \v -> do
         doc $ DDescription
           "Check whether address is admin. Returns `True` if the address is the admin."
@@ -153,12 +149,12 @@ holdingsIndigo param = contractName "Holdings" $ do
         setStorageField @Storage #totalSupply (0 nat)
     , #cSetPause #= \pausedNamed -> do
         -- admin check is already done in Lorentz code
-        let paused = UnName #value pausedNamed
+        let paused = unName #value pausedNamed
         setPause @Storage paused
     , #cSetTransferable #= \transferable -> do
         doc $ DDescription "Change transferable flag."
         ensureSenderIsAdmin
-        setStorageField @Storage #transferable $ UnName #value transferable
+        setStorageField @Storage #transferable $ unName #value transferable
     , #cGetTokenMeta #= \v -> do
         doc $ DDescription "Get token meta data: name, symbol and id."
         project v $ \_ -> getStorageField @Storage #tokenMeta
@@ -175,7 +171,7 @@ callAssertTransfer a = do
                  (eprName $ Call @"assertTransfer") addr
                )
           (\cAddr -> transferTokens a (0 mutez) cAddr)
-          (() <$ failCustom #invalidSafelistAddr [mt|assertTransfer|])
+          (failCustom @() #invalidSafelistAddr [mt|assertTransfer|])
     )
 
 callAssertReceiver
@@ -189,7 +185,7 @@ callAssertReceiver a = do
                  (eprName $ Call @"assertReceiver") addr
                )
           (\cAddr -> transferTokens a (0 mutez) cAddr)
-          (() <$ failCustom #invalidSafelistAddr [mt|assertReceiver|])
+          (failCustom @() #invalidSafelistAddr [mt|assertReceiver|])
     )
 
 callAssertReceivers
@@ -203,5 +199,5 @@ callAssertReceivers a = do
                  (eprName $ Call @"assertReceivers") addr
                )
           (\cAddr -> transferTokens a (0 mutez) cAddr)
-          (() <$ failCustom #invalidSafelistAddr [mt|assertReceivers|])
+          (failCustom @() #invalidSafelistAddr [mt|assertReceivers|])
     )
