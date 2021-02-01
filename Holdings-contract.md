@@ -1,10 +1,88 @@
 # Holdings
 
-**Code revision:** [1d62fd9](https://github.com/serokell/tezos-globacap/blob/1d62fd9e33403c71d2631191f52f3d0727e87505) *(Wed Dec 9 15:18:03 2020 +0300)*
+**Code revision:** [ecbb8ed](https://github.com/serokell/tezos-globacap/blob/ecbb8ed060ec865fcf76e2cd8ccf1ba00a45b5f9) *(Mon Feb 1 16:29:14 2021 +0300)*
 
 
 
 This contract is used to distribute the token, it is optionally regulated by the Safelist contract.
+
+<a name="section-Table-of-contents"></a>
+
+## Table of contents
+
+- [Haskell ⇄ Michelson conversion](#section-Haskell-c8644-Michelson-conversion)
+- [Storage](#section-Storage)
+  - [Holdings storage](#storage-Holdings-storage)
+- [Entrypoints](#section-Entrypoints)
+  - [setName](#entrypoints-setName)
+  - [setSymbol](#entrypoints-setSymbol)
+  - [setSafelistAddress](#entrypoints-setSafelistAddress)
+  - [transferAdminRights](#entrypoints-transferAdminRights)
+  - [acceptAdminRights](#entrypoints-acceptAdminRights)
+  - [isAdmin](#entrypoints-isAdmin)
+  - [transfer](#entrypoints-transfer)
+  - [seize](#entrypoints-seize)
+  - [approve](#entrypoints-approve)
+  - [getAllowance](#entrypoints-getAllowance)
+  - [getBalance](#entrypoints-getBalance)
+  - [getTotalSupply](#entrypoints-getTotalSupply)
+  - [mint](#entrypoints-mint)
+  - [burn](#entrypoints-burn)
+  - [burnAll](#entrypoints-burnAll)
+  - [setPause](#entrypoints-setPause)
+  - [setTransferable](#entrypoints-setTransferable)
+  - [getTokenMeta](#entrypoints-getTokenMeta)
+
+**[Definitions](#definitions)**
+
+- [Types](#section-Types)
+  - [()](#types-lparenrparen)
+  - [(a, b)](#types-lparenacomma-brparen)
+  - [(a, b, c)](#types-lparenacomma-bcomma-crparen)
+  - [Address](#types-Address)
+  - [BigMap](#types-BigMap)
+  - [Bool](#types-Bool)
+  - [Contract](#types-Contract)
+  - [Holdings storage fields](#types-Holdings-storage-fields)
+  - [Integer](#types-Integer)
+  - [Maybe](#types-Maybe)
+  - [Named entry](#types-Named-entry)
+  - [Natural](#types-Natural)
+  - [Text](#types-Text)
+  - [TokenMeta](#types-TokenMeta)
+  - [View](#types-View)
+- [Errors](#section-Errors)
+  - [InternalError](#errors-InternalError)
+  - [InvalidSafelistAddr](#errors-InvalidSafelistAddr)
+  - [NonTransferable](#errors-NonTransferable)
+  - [NotEnoughAllowance](#errors-NotEnoughAllowance)
+  - [NotEnoughBalance](#errors-NotEnoughBalance)
+  - [NotInTransferAdminRightsMode](#errors-NotInTransferAdminRightsMode)
+  - [SenderIsNotAdmin](#errors-SenderIsNotAdmin)
+  - [SenderIsNotNewAdmin](#errors-SenderIsNotNewAdmin)
+  - [SenderIsNotOwner](#errors-SenderIsNotOwner)
+  - [TokenOperationsArePaused](#errors-TokenOperationsArePaused)
+  - [UnsafeAllowanceChange](#errors-UnsafeAllowanceChange)
+
+
+
+<a name="section-Haskell-c8644-Michelson-conversion"></a>
+
+## Haskell ⇄ Michelson conversion
+
+This smart contract is developed in Haskell using the [Morley framework](https://gitlab.com/morley-framework/morley). Documentation mentions Haskell types that can be used for interaction with this contract from Haskell, but for each Haskell type we also mention its Michelson representation to make interactions outside of Haskell possible.
+
+There are multiple ways to interact with this contract:
+
+* Use this contract in your Haskell application, thus all operation submissions should be handled separately, e.g. via calling `tezos-client`, which will communicate with the `tezos-node`. In order to be able to call `tezos-client` you'll need to be able to construct Michelson values from Haskell.
+
+  The easiest way to do that is to serialize Haskell value using `lPackValue` function from [`Lorentz.Pack`](https://gitlab.com/morley-framework/morley/-/blob/2441e26bebd22ac4b30948e8facbb698d3b25c6d/code/lorentz/src/Lorentz/Pack.hs) module, encode resulting bytestring to hexadecimal representation using `encodeHex` function. Resulting hexadecimal encoded bytes sequence can be decoded back to Michelson value via `tezos-client unpack michelson data`.
+
+  Reverse conversion from Michelson value to the Haskell value can be done by serializing Michelson value using `tezos-client hash data` command, resulting `Raw packed data` should be decoded from the hexadecimal representation using `decodeHex` and deserialized to the Haskell value via `lUnpackValue` function from [`Lorentz.Pack`](https://gitlab.com/morley-framework/morley/-/blob/2441e26bebd22ac4b30948e8facbb698d3b25c6d/code/lorentz/src/Lorentz/Pack.hs).
+
+* Construct values for this contract directly on Michelson level using types provided in the documentation.
+
+<a name="section-Storage"></a>
 
 ## Storage
 
@@ -21,13 +99,15 @@ Root datatype for Holdings contract storage type. It contains two `big_map`s:
 Apart from that it has `fields` which store various additional information about contract state. See `Holdings storage fields` type.
 
 **Structure:** 
-  * ***ledger*** :[`BigMap`](#types-BigMap) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen) (***balance*** : [`Natural`](#types-Natural))
-  * ***approvals*** :[`BigMap`](#types-BigMap) (***owner*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***spender*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)) [`Natural`](#types-Natural)
+  * ***ledger*** :[`BigMap`](#types-BigMap) [`Address`](#types-Address) (***balance*** : [`Natural`](#types-Natural))
+  * ***approvals*** :[`BigMap`](#types-BigMap) (***owner*** : [`Address`](#types-Address), ***spender*** : [`Address`](#types-Address)) [`Natural`](#types-Natural)
   * ***fields*** :[`Holdings storage fields`](#types-Holdings-storage-fields)
 
 **Final Michelson representation:** `pair (big_map address nat) (pair (big_map (pair address address) nat) (pair (pair (pair (pair string (pair string string)) (option address)) (pair address address)) (pair (pair (option address) bool) (pair bool nat))))`
 
 
+
+<a name="section-Entrypoints"></a>
 
 ## Entrypoints
 
@@ -104,7 +184,7 @@ Change token symbol.
 Change optional Safelist contract address.
 
 **Argument:** 
-  + **In Haskell:** ***newMbSafelistAddress*** : [`Maybe`](#types-Maybe) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
+  + **In Haskell:** ***newMbSafelistAddress*** : [`Maybe`](#types-Maybe) [`Address`](#types-Address)
   + **In Michelson:** `(option :newMbSafelistAddress address)`
     + **Example:** <span id="example-id">`Some "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
@@ -134,7 +214,7 @@ Change optional Safelist contract address.
 Transfer admin rights to the new address.
 
 **Argument:** 
-  + **In Haskell:** ***newAdmin*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
+  + **In Haskell:** ***newAdmin*** : [`Address`](#types-Address)
   + **In Michelson:** `(address :newAdmin)`
     + **Example:** <span id="example-id">`"KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
@@ -196,7 +276,7 @@ Accept admin rights by the new admin.
 Check whether address is admin. Returns `True` if the address is the admin.
 
 **Argument:** 
-  + **In Haskell:** [`View`](#types-View) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen) [`Bool`](#types-Bool)
+  + **In Haskell:** [`View`](#types-View) [`Address`](#types-Address) [`Bool`](#types-Bool)
   + **In Michelson:** `(pair (address %viewParam) (contract %viewCallbackTo bool))`
     + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
@@ -229,7 +309,7 @@ In this case current number of tokens that sender is allowed to withdraw from th
 
 
 **Argument:** 
-  + **In Haskell:** (***from*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***to*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
+  + **In Haskell:** (***from*** : [`Address`](#types-Address), ***to*** : [`Address`](#types-Address), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :from) (pair (address :to) (nat :value)))`
     + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" (Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" 0)`</span>
 
@@ -267,7 +347,7 @@ In this case current number of tokens that sender is allowed to withdraw from th
 Forcibly send given amount of tokens from one address to another.
 
 **Argument:** 
-  + **In Haskell:** (***from*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***to*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
+  + **In Haskell:** (***from*** : [`Address`](#types-Address), ***to*** : [`Address`](#types-Address), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :from) (pair (address :to) (nat :value)))`
     + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" (Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" 0)`</span>
 
@@ -328,7 +408,7 @@ safely change the allowance for `X` to `K` token must:
 
 
 **Argument:** 
-  + **In Haskell:** (***spender*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
+  + **In Haskell:** (***spender*** : [`Address`](#types-Address), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :spender) (nat :value))`
     + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" 0`</span>
 
@@ -362,7 +442,7 @@ safely change the allowance for `X` to `K` token must:
 Returns the approval value between two given addresses.
 
 **Argument:** 
-  + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***spender*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)) [`Natural`](#types-Natural)
+  + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address`](#types-Address), ***spender*** : [`Address`](#types-Address)) [`Natural`](#types-Natural)
   + **In Michelson:** `(pair (pair %viewParam (address :owner) (address :spender)) (contract %viewCallbackTo nat))`
     + **Example:** <span id="example-id">`Pair (Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB") "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
@@ -387,7 +467,7 @@ Returns the approval value between two given addresses.
 Returns the balance of the address in the ledger.
 
 **Argument:** 
-  + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)) [`Natural`](#types-Natural)
+  + **In Haskell:** [`View`](#types-View) (***owner*** : [`Address`](#types-Address)) [`Natural`](#types-Natural)
   + **In Michelson:** `(pair (address :owner %viewParam) (contract %viewCallbackTo nat))`
     + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB"`</span>
 
@@ -437,7 +517,7 @@ Returns total number of tokens.
 Produces tokens on the account associated with the given address.
 
 **Argument:** 
-  + **In Haskell:** (***to*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
+  + **In Haskell:** (***to*** : [`Address`](#types-Address), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :to) (nat :value))`
     + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" 0`</span>
 
@@ -473,7 +553,7 @@ Produces tokens on the account associated with the given address.
 Destroys the given amount of tokens on the account associated with the given address.
 
 **Argument:** 
-  + **In Haskell:** (***from*** : [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen), ***value*** : [`Natural`](#types-Natural))
+  + **In Haskell:** (***from*** : [`Address`](#types-Address), ***value*** : [`Natural`](#types-Natural))
   + **In Michelson:** `(pair (address :from) (nat :value))`
     + **Example:** <span id="example-id">`Pair "KT1AEseqMV6fk2vtvQCVyA7ZCaxv7cpxtXdB" 0`</span>
 
@@ -624,6 +704,8 @@ Get token meta data: name, symbol and id.
 
 # Definitions
 
+<a name="section-Types"></a>
+
 ## Types
 
 <a name="types-lparenrparen"></a>
@@ -664,13 +746,18 @@ Tuple of size 3.
 
 
 
-<a name="types-Address-lparenno-entrypointrparen"></a>
+<a name="types-Address"></a>
 
 ---
 
-### `Address (no entrypoint)`
+### `Address`
 
-This is similar to Michelson Address, but does not retain entrypoint name if it refers to a contract.
+Address primitive.
+
+Unlike Michelson's `address`, it is assumed not to contain an entrypoint name,
+even if it refers to a contract; this won't be checked, so passing an entrypoint
+name may result in unexpected errors.
+
 
 **Final Michelson representation:** `address`
 
@@ -722,10 +809,10 @@ Additional contract fields that define the current contract state. It stores met
 
 **Structure:** 
   * ***tokenMeta*** :[`TokenMeta`](#types-TokenMeta)
-  * ***mbSafelistAddress*** :[`Maybe`](#types-Maybe) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
-  * ***owner*** :[`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
-  * ***admin*** :[`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
-  * ***mbNewAdmin*** :[`Maybe`](#types-Maybe) [`Address (no entrypoint)`](#types-Address-lparenno-entrypointrparen)
+  * ***mbSafelistAddress*** :[`Maybe`](#types-Maybe) [`Address`](#types-Address)
+  * ***owner*** :[`Address`](#types-Address)
+  * ***admin*** :[`Address`](#types-Address)
+  * ***mbNewAdmin*** :[`Maybe`](#types-Maybe) [`Address`](#types-Address)
   * ***paused*** :[`Bool`](#types-Bool)
   * ***transferable*** :[`Bool`](#types-Bool)
   * ***totalSupply*** :[`Natural`](#types-Natural)
@@ -824,13 +911,15 @@ Meta information about token.
 `View a r` accepts an argument of type `a` and callback contract which accepts `r` and returns result via calling that contract.
 Read more in [A1 conventions document](https://gitlab.com/tzip/tzip/-/blob/c42e3f0f5e73669e84e615d69bee73281572eb0a/proposals/tzip-4/tzip-4.md#view-entrypoints).
 
-**Structure (example):** `View () Integer` = 
-[`()`](#types-lparenrparen)
-[`ContractRef`](#types-Contract) [`Integer`](#types-Integer)
+**Structure (example):** `View MText Integer` = 
+  * [`Text`](#types-Text)
+  * [`ContractRef`](#types-Contract) [`Integer`](#types-Integer)
 
-**Final Michelson representation (example):** `View () Integer` = `pair unit (contract int)`
+**Final Michelson representation (example):** `View MText Integer` = `pair string (contract int)`
 
 
+
+<a name="section-Errors"></a>
 
 ## Errors
 
