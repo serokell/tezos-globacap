@@ -42,69 +42,70 @@ nettestScenario = uncapsNettest $ do
     -- Probably can be removed after https://gitlab.com/morley-framework/morley/-/issues/139
     -- is resolved. Currently we spend 10 times more fee than needed.
     td = TransferData
-      { tdFrom = owner
-      , tdTo = admin
+      { tdTo = admin
       , tdAmount = toMutez 1500000
       , tdEntrypoint = DefEpName
       , tdParameter = ()
       }
-  transfer td
+  withSender owner $ transfer td
 
   comment "Holdings nettest scenario"
   comment "Test admin rights rotation"
-  callFrom owner holdings (Call @"TransferAdminRights") (#newAdmin .! adminAddr)
-  callFrom someGuy holdings (Call @"AcceptAdminRights") () `expectFailure`
+  withSender owner $
+    call holdings (Call @"TransferAdminRights") (#newAdmin .! adminAddr)
+  (withSender someGuy $
+    call holdings (Call @"AcceptAdminRights") ()) `expectFailure`
     NettestFailedWithError (CustomError #senderIsNotNewAdmin ())
-  callFrom admin holdings (Call @"AcceptAdminRights") ()
-  callFrom someGuy holdings (Call @"TransferAdminRights") (#newAdmin .! someGuyAddr) `expectFailure`
+  withSender admin $ call holdings (Call @"AcceptAdminRights") ()
+  (withSender someGuy $ call holdings (Call @"TransferAdminRights") (#newAdmin .! someGuyAddr)) `expectFailure`
     NettestFailedWithError (CustomError #senderIsNotOwner ())
   comment "Test token actions: mint, approve, transfer, seize, burn"
-  callFrom admin holdings (Call @"Mint")
+  withSender admin $ call holdings (Call @"Mint")
     (#to .! senderAddr, #value .! (100500 :: Natural))
   comment "Now with safelist"
-  callFrom owner holdings (Call @"SetSafelistAddress")
+  withSender owner $ call holdings (Call @"SetSafelistAddress")
     (#newMbSafelistAddress .! Just (toAddress safelistAddr))
-  callFrom admin holdings (Call @"Mint")
-    (#to .! fakeSender, #value .! (100500 :: Natural)) `expectFailure`
+  (withSender admin $ call holdings (Call @"Mint")
+    (#to .! fakeSender, #value .! (100500 :: Natural))) `expectFailure`
     NettestFailedWithError (CustomError #assertionFailure ())
-  callFrom sender holdings (Call @"Approve")
+  withSender sender $ call holdings (Call @"Approve")
     (#spender .! adminAddr, #value .! (200 :: Natural))
-  callFrom admin holdings (Call @"Transfer")
-    (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural)) `expectFailure`
+  (withSender admin $ call holdings (Call @"Transfer")
+    (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))) `expectFailure`
     NettestFailedWithError
     (CustomError #notEnoughAllowance (#required .! 300, #present .! 200))
-  callFrom sender holdings (Call @"Transfer")
+  withSender sender $ call holdings (Call @"Transfer")
     (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
-  callFrom admin holdings (Call @"Seize")
+  withSender admin $ call holdings (Call @"Seize")
     (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))
-  callFrom someGuy holdings (Call @"Burn")
-    (#from .! senderAddr, #value .! (100000 :: Natural)) `expectFailure`
+  (withSender someGuy $ call holdings (Call @"Burn")
+    (#from .! senderAddr, #value .! (100000 :: Natural))) `expectFailure`
     NettestFailedWithError
     (CustomError #senderIsNotAdmin ())
-  callFrom admin holdings (Call @"Burn")
+  withSender admin $ call holdings (Call @"Burn")
     (#from .! senderAddr, #value .! (90000 :: Natural))
-  callFrom admin holdings (Call @"Transfer")
-    (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural)) `expectFailure`
+  (withSender admin $ call holdings (Call @"Transfer")
+    (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))) `expectFailure`
     NettestFailedWithError
     (CustomError #notEnoughAllowance (#required .! 300, #present .! 200))
-  callFrom admin holdings (Call @"BurnAll") ()
+  withSender admin $ call holdings (Call @"BurnAll") ()
   comment "Disable transfers"
-  callFrom admin holdings (Call @"SetTransferable") (#value .! False)
-  callFrom admin holdings (Call @"Mint")
+  withSender admin $ call holdings (Call @"SetTransferable") (#value .! False)
+  withSender admin $ call holdings (Call @"Mint")
     (#to .! senderAddr, #value .! (100500 :: Natural))
-  callFrom admin holdings (Call @"Transfer")
-    (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural)) `expectFailure`
+  (withSender admin $ call holdings (Call @"Transfer")
+    (#from .! senderAddr, #to .! receiver, #value .! (300 :: Natural))) `expectFailure`
     NettestFailedWithError (CustomError #nonTransferable ())
   comment "Pause Holdings"
-  callFrom admin holdings (Call @"SetPause") (#value .! True)
+  withSender admin $ call holdings (Call @"SetPause") (#value .! True)
   comment "Unset safelist"
-  callFrom owner holdings (Call @"SetSafelistAddress")
+  withSender owner $ call holdings (Call @"SetSafelistAddress")
     (#newMbSafelistAddress .! Nothing)
-  callFrom admin holdings (Call @"Mint")
-    (#to .! senderAddr, #value .! (100500 :: Natural)) `expectFailure`
+  (withSender admin $ call holdings (Call @"Mint")
+    (#to .! senderAddr, #value .! (100500 :: Natural))) `expectFailure`
     NettestFailedWithError (CustomError #tokenOperationsArePaused ())
   comment "Unpause Holdings"
-  callFrom admin holdings (Call @"SetPause") (#value .! False)
+  withSender admin $ call holdings (Call @"SetPause") (#value .! False)
   comment "Mint works for nonReciever"
-  callFrom admin holdings (Call @"Mint")
+  withSender admin $ call holdings (Call @"Mint")
     (#to .! fakeSender, #value .! (100500 :: Natural))

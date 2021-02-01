@@ -484,7 +484,7 @@ unit_FA1'2_is_implemented =
   expectContractEntrypoints @AL.Parameter holdingsContract
 
 test_documentation :: [TestTree]
-test_documentation = runDocTests testLorentzDoc holdingsDoc
+test_documentation = runDocTests testLorentzDoc holdingsContract
 
 test_approvableLedger :: IO TestTree
 test_approvableLedger =
