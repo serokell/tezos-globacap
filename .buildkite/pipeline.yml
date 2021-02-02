@@ -3,7 +3,6 @@
 
 env:
   TEZOS_CLIENT_UNSAFE_DISABLE_DISCLAIMER: "Y"
-  MONEYBAG: "unencrypted:edsk3AvAoPS5jFov49aWBQ9oVtCPwNSne2CriHvkFxfeCg4Srr5bak"
 
 steps:
   - label: hlint
@@ -54,6 +53,7 @@ steps:
     if: *not_scheduled_not_autodoc
     env:
       NETTEST_NODE_ENDPOINT: "http://localhost:8735"
+      MONEYBAG: "unencrypted:edsk3AvAoPS5jFov49aWBQ9oVtCPwNSne2CriHvkFxfeCg4Srr5bak"
     commands: &run-nettest
     - nix-build ci.nix -A packages.globacap.tests.globacap-nettest
     - nix run -f ci.nix tezos-client -c ./scripts/ci/run-local-chain-nettest.sh result/bin/globacap-nettest
@@ -65,6 +65,7 @@ steps:
     if: *not_scheduled_not_autodoc
     env:
       NETTEST_NODE_ENDPOINT: "http://localhost:8734"
+      MONEYBAG: "unencrypted:edsk3AvAoPS5jFov49aWBQ9oVtCPwNSne2CriHvkFxfeCg4Srr5bak"
     commands: *run-nettest
     retry: *retry-nettest
 
