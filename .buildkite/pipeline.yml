@@ -64,7 +64,7 @@ steps:
   - label: nettest-local-chain-008
     if: *not_scheduled_not_autodoc
     env:
-      NETTEST_NODE_ENDPOINT: "http://localhost:8734"
+      NETTEST_NODE_ENDPOINT: "http://localhost:8733"
       MONEYBAG: "unencrypted:edsk3AvAoPS5jFov49aWBQ9oVtCPwNSne2CriHvkFxfeCg4Srr5bak"
     commands: *run-nettest
     retry: *retry-nettest
