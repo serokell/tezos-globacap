@@ -6,6 +6,8 @@
 
 # Tezos Globacap
 
+WARNING: THIS REPOSITORY IS ARCHIVED AND NO LONGER MAINTAINED
+
 Tezos Globacap project provides two entities:
 * Safelist contract which is used to restrict and regulate share transfers.
 * Holdings contract which is used to distribute the token and optionally regulated by the
